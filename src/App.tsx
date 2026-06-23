@@ -57,7 +57,13 @@ export default function App() {
         let lastLoginTime = 0;
         try {
           const lastLoginTimeStr = localStorage.getItem('lastLoginTime');
-          lastLoginTime = lastLoginTimeStr ? parseInt(lastLoginTimeStr, 10) : 0;
+          if (!lastLoginTimeStr) {
+            // New login or registration, initialize the timer
+            lastLoginTime = Date.now();
+            localStorage.setItem('lastLoginTime', lastLoginTime.toString());
+          } else {
+            lastLoginTime = parseInt(lastLoginTimeStr, 10);
+          }
         } catch (e) {
           console.warn('localStorage access denied', e);
           lastLoginTime = Date.now(); // assume fresh if we can't read

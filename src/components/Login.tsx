@@ -8,7 +8,6 @@ interface Props {
 }
 
 export default function Login({ onLoginSuccess }: Props) {
-  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -45,10 +44,33 @@ export default function Login({ onLoginSuccess }: Props) {
     }
 
     try {
-      if (isLogin) {
+      try {
         await signInWithEmailAndPassword(auth, formattedEmail, password);
-      } else {
-        await createUserWithEmailAndPassword(auth, formattedEmail, password);
+      } catch (signInErr: any) {
+        // If user not found or invalid credential, try to create the account automatically
+        if (signInErr.code === 'auth/user-not-found' || signInErr.code === 'auth/invalid-credential' || signInErr.code === 'auth/invalid-login-credentials') {
+          try {
+            await createUserWithEmailAndPassword(auth, formattedEmail, password);
+          } catch (createErr: any) {
+             if (createErr.code === 'auth/email-already-in-use') {
+               setError('Contraseña incorrecta para este usuario.');
+             } else if (createErr.code === 'auth/weak-password') {
+               setError('La contraseña debe tener al menos 6 caracteres.');
+             } else {
+               setError(createErr.message || 'Error al crear la cuenta.');
+             }
+             setLoading(false);
+             return;
+          }
+        } else if (signInErr.code === 'auth/wrong-password') {
+          setError('Contraseña incorrecta.');
+          setLoading(false);
+          return;
+        } else {
+          setError(signInErr.message || 'Error de autenticación.');
+          setLoading(false);
+          return;
+        }
       }
       
       // Save last login time to check for expiration
@@ -59,15 +81,7 @@ export default function Login({ onLoginSuccess }: Props) {
       }
       onLoginSuccess();
     } catch (err: any) {
-      if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-        setError('Usuario/correo o contraseña incorrectos.');
-      } else if (err.code === 'auth/email-already-in-use') {
-        setError('Este correo o usuario ya está registrado.');
-      } else if (err.code === 'auth/weak-password') {
-        setError('La contraseña debe tener al menos 6 caracteres.');
-      } else {
-        setError(err.message || 'Error de autenticación. Verifica que Email/Password esté habilitado en Firebase console.');
-      }
+      setError('Ocurrió un error inesperado.');
     } finally {
       setLoading(false);
     }
@@ -90,7 +104,7 @@ export default function Login({ onLoginSuccess }: Props) {
             E Gaming Store
           </h1>
           <p className="text-center text-on-surface-variant font-medium mb-8">
-            {isLogin ? 'Inicia sesión para continuar' : 'Crea una cuenta nueva'}
+            Ingresa o crea tu cuenta automáticamente
           </p>
 
           {error && (
@@ -142,22 +156,9 @@ export default function Login({ onLoginSuccess }: Props) {
               disabled={loading}
               className="w-full btn-primary btn-primary-hover text-white font-bold py-3.5 rounded-xl transition-all shadow-lg mt-6 flex justify-center"
             >
-              {loading ? 'Cargando...' : isLogin ? 'Ingresar' : 'Registrarse'}
+              {loading ? 'Cargando...' : 'Ingresar / Registrarse'}
             </button>
           </form>
-
-          <div className="mt-8 text-center text-sm font-medium text-on-surface-variant">
-            {isLogin ? '¿No tienes una cuenta?' : '¿Ya tienes una cuenta?'}{' '}
-            <button 
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setError(null);
-              }}
-              className="text-primary hover:underline font-bold"
-            >
-              {isLogin ? 'Regístrate aquí' : 'Inicia sesión'}
-            </button>
-          </div>
         </div>
       </div>
     </div>
