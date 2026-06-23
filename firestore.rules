@@ -1,0 +1,23 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null && (
+        request.auth.token.email == 'egamingstore1@gmail.com' ||
+        request.auth.token.email == 'alexparababi23@gmail.com' ||
+        request.auth.token.email == 'avila2004alexparababi@gmail.com'
+      );
+    }
+
+    match /test/{docId} {
+      allow read, write: if true;
+    }
+
+    match /games/{gameId} {
+      // Anyone can see the games catalog
+      allow read: if true;
+      // Only admins can modify the pricing and gold
+      allow write: if isAdmin();
+    }
+  }
+}

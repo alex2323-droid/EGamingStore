@@ -1,0 +1,6 @@
+{
+  "name": "E Gaming Store",
+  "description": "Tienda en línea para recargar saldo y monedas de juegos",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
