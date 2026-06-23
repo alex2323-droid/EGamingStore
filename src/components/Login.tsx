@@ -25,11 +25,30 @@ export default function Login({ onLoginSuccess }: Props) {
     setError(null);
     setLoading(true);
 
+    const inputVal = email.trim();
+    if (!inputVal) {
+      setError('Por favor, ingresa tu correo o nombre de usuario.');
+      setLoading(false);
+      return;
+    }
+
+    // Determine if email or username under the hood
+    let formattedEmail = inputVal;
+    if (!formattedEmail.includes('@')) {
+      const sanitizedUsername = formattedEmail.replace(/[^a-zA-Z0-9_.-]/g, '');
+      if (!sanitizedUsername) {
+        setError('El nombre de usuario contiene caracteres no válidos.');
+        setLoading(false);
+        return;
+      }
+      formattedEmail = `${sanitizedUsername.toLowerCase()}@egamingstore.com`;
+    }
+
     try {
       if (isLogin) {
-        await signInWithEmailAndPassword(auth, email, password);
+        await signInWithEmailAndPassword(auth, formattedEmail, password);
       } else {
-        await createUserWithEmailAndPassword(auth, email, password);
+        await createUserWithEmailAndPassword(auth, formattedEmail, password);
       }
       
       // Save last login time to check for expiration
@@ -41,9 +60,9 @@ export default function Login({ onLoginSuccess }: Props) {
       onLoginSuccess();
     } catch (err: any) {
       if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-        setError('Correo o contraseña incorrectos.');
+        setError('Usuario/correo o contraseña incorrectos.');
       } else if (err.code === 'auth/email-already-in-use') {
-        setError('Este correo ya está registrado.');
+        setError('Este correo o usuario ya está registrado.');
       } else if (err.code === 'auth/weak-password') {
         setError('La contraseña debe tener al menos 6 caracteres.');
       } else {
@@ -83,18 +102,20 @@ export default function Login({ onLoginSuccess }: Props) {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-bold text-on-surface-variant mb-1.5 uppercase tracking-wider">Correo Electrónico</label>
+              <label className="block text-sm font-bold text-on-surface-variant mb-1.5 uppercase tracking-wider">
+                Correo o Usuario
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-on-surface-variant">
                   <Mail size={18} />
                 </div>
                 <input 
-                  type="email" 
+                  type="text" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   className="w-full bg-surface-container-low border border-glass-border rounded-xl py-3 pl-10 pr-4 text-on-surface focus:outline-none focus:border-primary transition-colors"
-                  placeholder="ejemplo@correo.com"
+                  placeholder="ejemplo@correo.com o tu_usuario"
                 />
               </div>
             </div>

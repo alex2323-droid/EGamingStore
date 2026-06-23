@@ -17,7 +17,7 @@ import { auth, db } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, getDocs, doc, setDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 
-const SESSION_TIMEOUT_MS = 24 * 60 * 60 * 1000; // 24 hours
+const SESSION_TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2 horas (Sesión periódica requerida)
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -80,6 +80,29 @@ export default function App() {
     });
 
     return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    // Check session timeout periodically every 15 seconds
+    const interval = setInterval(() => {
+      if (auth.currentUser) {
+        let lastLoginTime = 0;
+        try {
+          const lastLoginTimeStr = localStorage.getItem('lastLoginTime');
+          lastLoginTime = lastLoginTimeStr ? parseInt(lastLoginTimeStr, 10) : 0;
+        } catch (e) {
+          console.warn('localStorage access denied', e);
+          return;
+        }
+        if (lastLoginTime > 0 && Date.now() - lastLoginTime > SESSION_TIMEOUT_MS) {
+          signOut(auth).then(() => {
+            setIsAuthenticated(false);
+          });
+        }
+      }
+    }, 15000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const handleNavigate = (tab: 'home' | 'orders' | 'support' | 'profile' | 'inbox' | 'admin') => {

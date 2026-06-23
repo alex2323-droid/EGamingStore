@@ -21,6 +21,10 @@ export default function Profile({ orders }: Props) {
   };
 
   const currentEmail = auth.currentUser?.email || 'usuario@correo.com';
+  const isUsernameOnly = currentEmail.endsWith('@egamingstore.com');
+  const displayName = isUsernameOnly 
+    ? currentEmail.replace('@egamingstore.com', '') 
+    : currentEmail;
 
   return (
     <div className="max-w-4xl mx-auto px-4 md:px-8 py-8 w-full pb-24 md:pb-8 animation-fade-in">
@@ -44,9 +48,11 @@ export default function Profile({ orders }: Props) {
           </div>
           
           <div className="relative z-10 flex-grow">
-            <h2 className="font-display text-2xl font-bold text-on-surface mb-1">Mi Cuenta</h2>
+            <h2 className="font-display text-2xl font-bold text-on-surface mb-1">
+              {isUsernameOnly ? displayName : 'Mi Cuenta'}
+            </h2>
             <div className="flex items-center justify-center md:justify-start gap-2 text-on-surface-variant font-medium text-sm mb-4">
-              <Mail size={14} /> {currentEmail}
+              <Mail size={14} /> {isUsernameOnly ? `Usuario: ${displayName}` : currentEmail}
             </div>
             
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-surface-container rounded-lg border border-glass-border">
