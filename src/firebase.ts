@@ -1,11 +1,25 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, User, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, initializeAuth, inMemoryPersistence, browserLocalPersistence, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, User, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId);
+
+let authInstance;
+try {
+  // Try default auth
+  authInstance = getAuth(app);
+} catch (e) {
+  // Fallback if indexedDB/localStorage is blocked
+  authInstance = initializeAuth(app, {
+    persistence: inMemoryPersistence
+  });
+}
+export const auth = authInstance;
+
+export const db = (firebaseConfig as any).firestoreDatabaseId 
+  ? getFirestore(app, (firebaseConfig as any).firestoreDatabaseId) 
+  : getFirestore(app);
 
 
 const provider = new GoogleAuthProvider();
