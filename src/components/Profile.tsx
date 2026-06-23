@@ -12,7 +12,11 @@ export default function Profile({ orders }: Props) {
   const totalSpent = completedOrders.reduce((sum, order) => sum + order.price, 0);
 
   const handleLogout = async () => {
-    localStorage.removeItem('lastLoginTime');
+    try {
+      localStorage.removeItem('lastLoginTime');
+    } catch (e) {
+      console.warn('localStorage access denied', e);
+    }
     await signOut(auth);
   };
 
