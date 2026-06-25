@@ -3,6 +3,9 @@ import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import nodemailer from 'nodemailer';
 import fs from 'fs/promises';
+import { GoogleGenAI } from '@google/genai';
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const EMAIL_USER = 'EgamingStore1@gmail.com';
 const EMAIL_PASS = 'hlbh ebih oihl ewcf';
@@ -95,6 +98,31 @@ Detalles de la orden:
     } catch (error) {
       console.error('Error sending email notification:', error);
       res.status(500).json({ error: 'Failed to send notification' });
+    }
+  });
+
+  app.post('/api/auto-fix', async (req, res) => {
+    try {
+      const { errors } = req.body;
+      if (!errors || errors.length === 0) {
+        return res.json({ success: true, message: 'No errors to fix' });
+      }
+
+      console.log('Received errors for auto-fix:', errors);
+      
+      const prompt = `Se han detectado los siguientes errores en la aplicación web: \n\n${JSON.stringify(errors, null, 2)}\n\nPor favor, genera un análisis de la causa raíz. Si es posible solucionarlo sin contexto de archivos, proporciona sugerencias. Si necesitas más archivos, indícalo. Como soy un sistema automatizado, solo puedo registrar el análisis, no modificar archivos directamente desde aquí.`;
+      
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt
+      });
+
+      console.log('Gemini AI Analysis:', response.text);
+
+      res.json({ success: true, message: 'Errors processed', analysis: response.text });
+    } catch (error) {
+      console.error('Error in auto-fix:', error);
+      res.status(500).json({ error: 'Failed to process auto-fix' });
     }
   });
 

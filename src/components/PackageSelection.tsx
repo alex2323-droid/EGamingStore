@@ -45,10 +45,15 @@ export default function PackageSelection({ packages, selectedPackage, onSelect }
                 <p className="text-sm text-on-surface-variant font-medium">{pkg.currency}</p>
               </div>
               
-              <div className={`mt-3 px-3 py-1 rounded-full text-xs font-semibold ${
-                isSelected ? 'btn-primary text-white' : 'bg-surface-variant text-primary'
-              }`}>
-                Bs {pkg.price.toFixed(2)}
+              <div className="flex flex-col items-center gap-1 mt-3">
+                {pkg.discountPercentage && (
+                  <span className="text-[10px] text-on-surface-variant line-through">Bs {pkg.price.toFixed(2)}</span>
+                )}
+                <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                  isSelected ? 'btn-primary text-white' : 'bg-surface-variant text-primary'
+                }`}>
+                  Bs {pkg.discountPercentage ? (pkg.price * (1 - pkg.discountPercentage / 100)).toFixed(2) : pkg.price.toFixed(2)}
+                </div>
               </div>
             </div>
           );

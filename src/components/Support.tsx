@@ -1,21 +1,57 @@
-import { MessageCircle, Mail, MapPin, ChevronDown } from 'lucide-react';
-import { useState } from 'react';
+import { MessageCircle, Mail, MapPin, ChevronDown } from "lucide-react";
+import { useState } from "react";
+import mascotSupportImg from "../assets/images/mascot_support_1782343607946.jpg";
+import { SiteSettings } from "../types";
 
-export default function Support() {
+interface Props {
+  siteSettings?: SiteSettings | null;
+}
+
+export default function Support({ siteSettings }: Props) {
   const faqs = [
-    { q: '¿Cuánto tarda en reflejarse mi recarga?', a: 'La mayoría de nuestras recargas son instantáneas. Sin embargo, en algunos métodos de pago como Zelle, puede tomar hasta 15 minutos en verificarse.' },
-    { q: '¿Qué hacer si me equivoqué de ID de jugador?', a: 'Comunícate inmediatamente con nuestro soporte a WhatsApp con tu número de orden. Si el saldo no ha sido procesado por el sistema automatizado, podremos cancelarlo.' },
-    { q: '¿Qué métodos de pago aceptan?', a: 'Aceptamos Pago Móvil, Zelle y tarjetas de crédito internacionales en un canal 100% seguro y encriptado.' },
-    { q: '¿Cómo funciona el Bono Extra?', a: 'Algunos paquetes incluyen un bono marcado con una etiqueta roja. Este monto extra se acreditará junto con tu recarga principal y sin costo adicional.' }
+    {
+      q: "¿Cuánto tarda en reflejarse mi recarga?",
+      a: "La mayoría de nuestras recargas son instantáneas. Sin embargo, en algunos métodos de pago como Zelle, puede tomar hasta 15 minutos en verificarse.",
+    },
+    {
+      q: "¿Qué hacer si me equivoqué de ID de jugador?",
+      a: "Comunícate inmediatamente con nuestro soporte a WhatsApp con tu número de orden. Si el saldo no ha sido procesado por el sistema automatizado, podremos cancelarlo.",
+    },
+    {
+      q: "¿Qué métodos de pago aceptan?",
+      a: "Aceptamos Pago Móvil, Zelle y tarjetas de crédito internacionales en un canal 100% seguro y encriptado.",
+    },
+    {
+      q: "¿Cómo funciona el Bono Extra?",
+      a: "Algunos paquetes incluyen un bono marcado con una etiqueta roja. Este monto extra se acreditará junto con tu recarga principal y sin costo adicional.",
+    },
   ];
 
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  
+  const showMascot = siteSettings ? siteSettings.showMascotSupport : true;
+  const currentMascotUrl = siteSettings?.mascotSupportUrl || mascotSupportImg;
 
   return (
     <div className="max-w-4xl mx-auto px-4 md:px-8 py-8 w-full pb-24 md:pb-8 animation-fade-in">
-      <div className="mb-8">
-        <h1 className="font-display text-2xl md:text-3xl font-bold text-on-surface">Centro de Soporte</h1>
-        <p className="text-on-surface-variant font-medium mt-1">Estamos aquí para ayudarte. Contáctanos a través de nuestros canales oficiales.</p>
+      <div className="mb-8 flex flex-col md:flex-row items-center md:items-end gap-6 bg-surface-container rounded-2xl p-6 border border-glass-border shadow-lg overflow-hidden relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent pointer-events-none"></div>
+        {showMascot && (
+          <img
+            src={currentMascotUrl}
+            alt="Soporte Shark Mascot"
+            className="w-32 h-32 md:w-40 md:h-40 object-cover rounded-full border-4 border-surface shadow-xl z-10"
+          />
+        )}
+        <div className="z-10 text-center md:text-left">
+          <h1 className="font-display text-2xl md:text-3xl font-bold text-on-surface">
+            Centro de Soporte
+          </h1>
+          <p className="text-on-surface-variant font-medium mt-1">
+            Estamos aquí para ayudarte. Contáctanos a través de nuestros canales
+            oficiales.
+          </p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
@@ -24,8 +60,13 @@ export default function Support() {
             <MessageCircle size={32} className="fill-current" />
           </div>
           <div>
-            <h3 className="font-display text-lg font-bold text-on-surface">Atención Vía WhatsApp</h3>
-            <p className="text-sm text-on-surface-variant mb-4 mt-2">Respuestas rápidas 24/7 a través de nuestro canal de WhatsApp para problemas urgentes y verificación de pagos.</p>
+            <h3 className="font-display text-lg font-bold text-on-surface">
+              Atención Vía WhatsApp
+            </h3>
+            <p className="text-sm text-on-surface-variant mb-4 mt-2">
+              Respuestas rápidas 24/7 a través de nuestro canal de WhatsApp para
+              problemas urgentes y verificación de pagos.
+            </p>
             <button className="bg-[#25D366] text-white font-bold py-2.5 px-6 rounded-lg w-full hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
               <MessageCircle size={18} /> Chat en Vivo
             </button>
@@ -38,8 +79,12 @@ export default function Support() {
               <Mail size={24} />
             </div>
             <div>
-              <h4 className="font-display font-bold text-on-surface">Soporte por Correo</h4>
-              <p className="text-sm font-medium text-on-surface-variant mt-1">soporte@egamingstore.com</p>
+              <h4 className="font-display font-bold text-on-surface">
+                Soporte por Correo
+              </h4>
+              <p className="text-sm font-medium text-on-surface-variant mt-1">
+                soporte@egamingstore.com
+              </p>
             </div>
           </div>
           <div className="flex items-start gap-4 mt-2">
@@ -47,30 +92,43 @@ export default function Support() {
               <MapPin size={24} />
             </div>
             <div>
-              <h4 className="font-display font-bold text-on-surface">Ubicación</h4>
-              <p className="text-sm font-medium text-on-surface-variant mt-1">Caracas, Venezuela<br/>Disponible mundialmente</p>
+              <h4 className="font-display font-bold text-on-surface">
+                Ubicación
+              </h4>
+              <p className="text-sm font-medium text-on-surface-variant mt-1">
+                Caracas, Venezuela
+                <br />
+                Disponible mundialmente
+              </p>
             </div>
           </div>
         </div>
       </div>
 
       <div className="mb-6">
-        <h2 className="font-display text-xl font-bold text-on-surface mb-6">Preguntas Frecuentes</h2>
+        <h2 className="font-display text-xl font-bold text-on-surface mb-6">
+          Preguntas Frecuentes
+        </h2>
         <div className="flex flex-col gap-3">
           {faqs.map((faq, index) => {
             const isOpen = openFaq === index;
             return (
-              <div 
-                key={index} 
+              <div
+                key={index}
                 className="glass-panel rounded-xl overflow-hidden border border-glass-border transition-colors cursor-pointer hover:border-primary/30"
                 onClick={() => setOpenFaq(isOpen ? null : index)}
               >
                 <div className="p-4 flex items-center justify-between gap-4 bg-surface-container-low">
-                  <h4 className="font-display font-bold text-sm md:text-base text-on-surface">{faq.q}</h4>
-                  <ChevronDown className={`shrink-0 text-primary transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} size={20} />
+                  <h4 className="font-display font-bold text-sm md:text-base text-on-surface">
+                    {faq.q}
+                  </h4>
+                  <ChevronDown
+                    className={`shrink-0 text-primary transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+                    size={20}
+                  />
                 </div>
-                <div 
-                  className={`px-4 text-on-surface-variant font-medium text-sm transition-all duration-300 overflow-hidden ${isOpen ? 'max-h-40 pb-4 pt-2 opacity-100' : 'max-h-0 opacity-0'}`}
+                <div
+                  className={`px-4 text-on-surface-variant font-medium text-sm transition-all duration-300 overflow-hidden ${isOpen ? "max-h-40 pb-4 pt-2 opacity-100" : "max-h-0 opacity-0"}`}
                 >
                   {faq.a}
                 </div>

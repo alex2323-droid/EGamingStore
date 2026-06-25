@@ -1,17 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { Mail, Lock, Gamepad2, AlertCircle } from 'lucide-react';
-import { auth } from '../firebase';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import React, { useState, useEffect } from "react";
+import { Mail, Lock, Gamepad2, AlertCircle } from "lucide-react";
+import { auth } from "../firebase";
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+} from "firebase/auth";
+import mascotImg from "../assets/images/mascot_1782343593124.jpg";
+import { SiteSettings } from "../types";
 
 interface Props {
   onLoginSuccess: () => void;
+  siteSettings?: SiteSettings | null;
 }
 
-export default function Login({ onLoginSuccess }: Props) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+export default function Login({ onLoginSuccess, siteSettings }: Props) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  
+  const showMascot = siteSettings ? siteSettings.showMascotLogin : true;
+  const currentMascotUrl = siteSettings?.mascotLoginUrl || mascotImg;
 
   useEffect(() => {
     // If the user was logged in previously but session expired,
@@ -26,17 +35,17 @@ export default function Login({ onLoginSuccess }: Props) {
 
     const inputVal = email.trim();
     if (!inputVal) {
-      setError('Por favor, ingresa tu correo o nombre de usuario.');
+      setError("Por favor, ingresa tu correo o nombre de usuario.");
       setLoading(false);
       return;
     }
 
     // Determine if email or username under the hood
     let formattedEmail = inputVal;
-    if (!formattedEmail.includes('@')) {
-      const sanitizedUsername = formattedEmail.replace(/[^a-zA-Z0-9_.-]/g, '');
+    if (!formattedEmail.includes("@")) {
+      const sanitizedUsername = formattedEmail.replace(/[^a-zA-Z0-9_.-]/g, "");
       if (!sanitizedUsername) {
-        setError('El nombre de usuario contiene caracteres no válidos.');
+        setError("El nombre de usuario contiene caracteres no válidos.");
         setLoading(false);
         return;
       }
@@ -44,44 +53,53 @@ export default function Login({ onLoginSuccess }: Props) {
     }
 
     try {
+      // Save last login time before authentication to avoid race condition with onAuthStateChanged
+      try {
+        localStorage.setItem("lastLoginTime", Date.now().toString());
+      } catch (e) {
+        console.warn("localStorage access denied", e);
+      }
+
       try {
         await signInWithEmailAndPassword(auth, formattedEmail, password);
       } catch (signInErr: any) {
         // If user not found or invalid credential, try to create the account automatically
-        if (signInErr.code === 'auth/user-not-found' || signInErr.code === 'auth/invalid-credential' || signInErr.code === 'auth/invalid-login-credentials') {
+        if (
+          signInErr.code === "auth/user-not-found" ||
+          signInErr.code === "auth/invalid-credential" ||
+          signInErr.code === "auth/invalid-login-credentials"
+        ) {
           try {
-            await createUserWithEmailAndPassword(auth, formattedEmail, password);
+            await createUserWithEmailAndPassword(
+              auth,
+              formattedEmail,
+              password,
+            );
           } catch (createErr: any) {
-             if (createErr.code === 'auth/email-already-in-use') {
-               setError('Contraseña incorrecta para este usuario.');
-             } else if (createErr.code === 'auth/weak-password') {
-               setError('La contraseña debe tener al menos 6 caracteres.');
-             } else {
-               setError(createErr.message || 'Error al crear la cuenta.');
-             }
-             setLoading(false);
-             return;
+            if (createErr.code === "auth/email-already-in-use") {
+              setError("Contraseña incorrecta para este usuario.");
+            } else if (createErr.code === "auth/weak-password") {
+              setError("La contraseña debe tener al menos 6 caracteres.");
+            } else {
+              setError(createErr.message || "Error al crear la cuenta.");
+            }
+            setLoading(false);
+            return;
           }
-        } else if (signInErr.code === 'auth/wrong-password') {
-          setError('Contraseña incorrecta.');
+        } else if (signInErr.code === "auth/wrong-password") {
+          setError("Contraseña incorrecta.");
           setLoading(false);
           return;
         } else {
-          setError(signInErr.message || 'Error de autenticación.');
+          setError(signInErr.message || "Error de autenticación.");
           setLoading(false);
           return;
         }
       }
-      
-      // Save last login time to check for expiration
-      try {
-        localStorage.setItem('lastLoginTime', Date.now().toString());
-      } catch (e) {
-        console.warn('localStorage access denied', e);
-      }
+
       onLoginSuccess();
     } catch (err: any) {
-      setError('Ocurrió un error inesperado.');
+      setError("Ocurrió un error inesperado.");
     } finally {
       setLoading(false);
     }
@@ -90,16 +108,21 @@ export default function Login({ onLoginSuccess }: Props) {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md glass-panel p-8 rounded-3xl border border-glass-border shadow-2xl animation-fade-in relative overflow-hidden">
-        
         {/* Background Accents */}
         <div className="absolute -top-20 -right-20 w-40 h-40 bg-primary/20 blur-3xl rounded-full pointer-events-none"></div>
         <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-primary/10 blur-3xl rounded-full pointer-events-none"></div>
 
         <div className="relative z-10">
-          <div className="flex justify-center mb-6 text-primary">
-            <Gamepad2 size={48} />
-          </div>
-          
+          {showMascot && (
+            <div className="flex justify-center mb-6">
+              <img
+                src={currentMascotUrl}
+                alt="Mascota E Gaming Store"
+                className="w-24 h-24 object-cover rounded-full shadow-lg border-4 border-surface bg-surface-container"
+              />
+            </div>
+          )}
+
           <h1 className="font-display text-2xl font-bold text-center text-on-surface mb-2 uppercase tracking-wide">
             E Gaming Store
           </h1>
@@ -123,8 +146,8 @@ export default function Login({ onLoginSuccess }: Props) {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-on-surface-variant">
                   <Mail size={18} />
                 </div>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -135,13 +158,15 @@ export default function Login({ onLoginSuccess }: Props) {
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-on-surface-variant mb-1.5 uppercase tracking-wider">Contraseña</label>
+              <label className="block text-sm font-bold text-on-surface-variant mb-1.5 uppercase tracking-wider">
+                Contraseña
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-on-surface-variant">
                   <Lock size={18} />
                 </div>
-                <input 
-                  type="password" 
+                <input
+                  type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -151,12 +176,12 @@ export default function Login({ onLoginSuccess }: Props) {
               </div>
             </div>
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={loading}
               className="w-full btn-primary btn-primary-hover text-white font-bold py-3.5 rounded-xl transition-all shadow-lg mt-6 flex justify-center"
             >
-              {loading ? 'Cargando...' : 'Ingresar / Registrarse'}
+              {loading ? "Cargando..." : "Ingresar / Registrarse"}
             </button>
           </form>
         </div>

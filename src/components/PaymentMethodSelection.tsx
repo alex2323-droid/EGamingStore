@@ -44,11 +44,18 @@ export default function PaymentMethodSelection({ methods, selectedId, onSelect }
                 </div>
               )}
               {getIcon(method.iconType, isSelected)}
-              <span className="text-sm font-medium text-on-surface">{method.name}</span>
+              <span className="text-sm font-medium text-on-surface text-center px-2">{method.name}</span>
             </div>
           );
         })}
       </div>
+
+      {methods.find(m => m.id === selectedId)?.instructions && (
+        <div className="mt-4 p-4 rounded-lg bg-surface-variant text-on-surface-variant text-sm space-y-1">
+          <p className="font-semibold text-on-surface mb-2">Instrucciones de Pago:</p>
+          <div className="whitespace-pre-wrap">{methods.find(m => m.id === selectedId)?.instructions}</div>
+        </div>
+      )}
     </section>
   );
 }

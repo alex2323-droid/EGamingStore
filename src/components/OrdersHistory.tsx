@@ -11,7 +11,18 @@ export default function OrdersHistory({ orders }: Props) {
       case 'completed': return { color: 'text-green-400', bg: 'bg-green-400/20', icon: <CheckCircle2 size={16} /> };
       case 'pending': return { color: 'text-yellow-400', bg: 'bg-yellow-400/20', icon: <Clock size={16} /> };
       case 'failed': return { color: 'text-red-400', bg: 'bg-red-400/20', icon: <XCircle size={16} /> };
+      case 'rejected': return { color: 'text-red-400', bg: 'bg-red-400/20', icon: <XCircle size={16} /> };
       default: return { color: 'text-on-surface-variant', bg: 'bg-surface-variant', icon: <Clock size={16} /> };
+    }
+  };
+
+  const translateStatus = (status: string) => {
+    switch (status) {
+      case 'completed': return 'Completada';
+      case 'pending': return 'Pendiente';
+      case 'rejected': return 'Rechazada';
+      case 'failed': return 'Fallida';
+      default: return status;
     }
   };
 
@@ -48,22 +59,33 @@ export default function OrdersHistory({ orders }: Props) {
                       <span>•</span>
                       <span>{new Date(order.date).toLocaleDateString()}</span>
                     </div>
+                    {order.playerId && (
+                      <div className="text-xs text-tertiary-container font-mono font-bold mt-1">
+                        ID: {order.playerId}
+                      </div>
+                    )}
                   </div>
                 </div>
                 
-                <div className="flex items-center justify-between w-full md:w-auto gap-6 border-t md:border-none border-glass-border pt-4 md:pt-0 mt-2 md:mt-0">
-                  <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${statusConfig.bg} ${statusConfig.color}`}>
-                    {statusConfig.icon}
-                    <span className="capitalize">{order.status === 'completed' ? 'Completada' : order.status}</span>
-                  </div>
-                  
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <span className="block text-[10px] text-on-surface-variant uppercase font-bold tracking-wider mb-0.5">{order.paymentMethod}</span>
-                      <span className="font-display font-bold text-primary">Bs {order.price.toFixed(2)}</span>
+                <div className="flex flex-col md:items-end justify-between w-full md:w-auto gap-4 border-t md:border-none border-glass-border pt-4 md:pt-0 mt-2 md:mt-0">
+                  <div className="flex items-center justify-between md:justify-end gap-6 w-full">
+                    <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${statusConfig.bg} ${statusConfig.color}`}>
+                      {statusConfig.icon}
+                      <span className="capitalize">{translateStatus(order.status)}</span>
                     </div>
-                    <ChevronRight size={20} className="text-on-surface-variant hidden md:block" />
+                    
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <span className="block text-[10px] text-on-surface-variant uppercase font-bold tracking-wider mb-0.5">{order.paymentMethod}</span>
+                        <span className="font-display font-bold text-primary">Bs {order.price.toFixed(2)}</span>
+                      </div>
+                    </div>
                   </div>
+                  {order.referenceNumber && (
+                    <div className="text-xs text-on-surface-variant font-mono self-start md:self-end">
+                      Ref: {order.referenceNumber}
+                    </div>
+                  )}
                 </div>
               </div>
             );
