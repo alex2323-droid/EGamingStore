@@ -25,7 +25,8 @@ import {
   writeBatch,
   query,
   where,
-  orderBy
+  orderBy,
+  onSnapshot
 } from "firebase/firestore";
 
 const SESSION_TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2 horas (Sesión periódica requerida)
@@ -88,7 +89,14 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    let unsubscribeOrders: (() => void) | undefined;
+    
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (unsubscribeOrders) {
+        unsubscribeOrders();
+        unsubscribeOrders = undefined;
+      }
+      
       if (user) {
         // Check session expiration
         let lastLoginTime = 0;
@@ -124,8 +132,7 @@ export default function App() {
               userEmail.toLowerCase() === "avila2004alexparababi@gmail.com";
           setIsAdmin(isUserAdmin);
 
-          // Fetch orders for this user
-          const loadOrders = async () => {
+          const loadOrders = () => {
             try {
               let ordersQuery;
               if (isUserAdmin) {
@@ -134,12 +141,16 @@ export default function App() {
               } else {
                 ordersQuery = query(collection(db, "orders"), where("userId", "==", user.uid));
               }
-              const querySnapshot = await getDocs(ordersQuery);
-              const loadedOrders = querySnapshot.docs.map(doc => doc.data() as Order);
-              loadedOrders.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-              setOrders(loadedOrders);
+              
+              unsubscribeOrders = onSnapshot(ordersQuery, (querySnapshot) => {
+                const loadedOrders = querySnapshot.docs.map(doc => doc.data() as Order);
+                loadedOrders.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                setOrders(loadedOrders);
+              }, (error) => {
+                console.error("Error fetching orders:", error);
+              });
             } catch (error) {
-              console.error("Error fetching orders:", error);
+              console.error("Error setting up order snapshot:", error);
             }
           };
           loadOrders();
@@ -147,10 +158,16 @@ export default function App() {
       } else {
         setIsAuthenticated(false);
         setIsAdmin(false);
+        setOrders([]);
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeOrders) {
+        unsubscribeOrders();
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -200,7 +217,6 @@ export default function App() {
   };
 
   const handleCheckoutSuccess = (order: Order) => {
-    setOrders((prev) => [order, ...prev]);
     setSelectedGame(null);
     setActiveTab("orders"); // Jump to orders history after a successful purchase
   };
@@ -278,7 +294,21 @@ export default function App() {
       const updatedOrder = { ...orderToUpdate, status };
       
       await setDoc(doc(db, 'orders', orderId), updatedOrder);
-      setOrders(prev => prev.map(o => o.id === orderId ? updatedOrder : o));
+      
+      if (status === 'completed' || status === 'rejected') {
+        fetch('/api/notify-order-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            order: updatedOrder,
+            customerEmail: updatedOrder.userEmail,
+            status
+          })
+        }).catch(e => console.error("Failed to trigger email notification", e));
+      }
+      
+      // Removed setOrders as onSnapshot will handle it automatically
+      // setOrders(prev => prev.map(o => o.id === orderId ? updatedOrder : o));
       return true;
     } catch (err) {
       console.error("Failed to update order", err);

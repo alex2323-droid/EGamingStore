@@ -104,6 +104,38 @@ Detalles de la orden:
     }
   });
 
+  app.post('/api/notify-order-status', async (req, res) => {
+    try {
+      const { order, customerEmail, status } = req.body;
+      
+      let subject = '';
+      let text = '';
+      
+      if (status === 'completed') {
+        subject = `Recarga Completada Exitosamente - ${order.gameName}`;
+        text = `Hola,\n\nTu recarga ha sido procesada y completada con éxito.\n\nDetalles de la orden:\n- ID de Orden: ${order.id}\n- Juego: ${order.gameName}\n- Paquete: ${order.packageName}\n- Player ID: ${order.playerId || 'N/A'}\n- Fecha de Orden: ${new Date(order.date).toLocaleString()}\n\n¡Gracias por tu compra en Egaming Store!\n`;
+      } else if (status === 'rejected') {
+        subject = `Recarga Rechazada - ${order.gameName}`;
+        text = `Hola,\n\nLamentamos informarte que tu recarga ha sido rechazada.\n\nDetalles de la orden:\n- ID de Orden: ${order.id}\n- Juego: ${order.gameName}\n- Paquete: ${order.packageName}\n- Fecha de Orden: ${new Date(order.date).toLocaleString()}\n\nPor favor, contacta a soporte para más detalles.\n`;
+      } else {
+        return res.json({ success: true, message: 'Status does not require notification' });
+      }
+
+      const mailOptions = {
+        from: EMAIL_USER,
+        to: customerEmail,
+        subject,
+        text,
+      };
+
+      await transporter.sendMail(mailOptions);
+      res.json({ success: true, message: 'Notification sent' });
+    } catch (error) {
+      console.error('Error sending order status email notification:', error);
+      res.status(500).json({ error: 'Failed to send notification' });
+    }
+  });
+
   app.post('/api/auto-fix', async (req, res) => {
     try {
       const { errors } = req.body;
