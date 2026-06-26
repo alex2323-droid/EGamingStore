@@ -7,8 +7,8 @@ import { GoogleGenAI } from '@google/genai';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-const EMAIL_USER = 'EgamingStore1@gmail.com';
-const EMAIL_PASS = 'hlbh ebih oihl ewcf';
+const EMAIL_USER = process.env.GMAIL_USER || 'EgamingStore1@gmail.com';
+const EMAIL_PASS = process.env.GMAIL_APP_PASSWORD || 'hlbhebihoihlewcf';
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -76,9 +76,11 @@ async function startServer() {
     try {
       const { order, customerEmail } = req.body;
       
+      const admins = ['EgamingStore1@gmail.com', 'alexparababi23@gmail.com', 'avila2004alexparababi@gmail.com'];
+      
       const mailOptions = {
         from: EMAIL_USER,
-        to: EMAIL_USER,
+        to: admins.join(', '),
         subject: `Nueva Recarga Exitosa - ${order.gameName}`,
         text: `Se ha registrado una nueva recarga.
 
@@ -90,6 +92,7 @@ Detalles de la orden:
 - Método de Pago: ${order.paymentMethod}
 - Fecha: ${new Date(order.date).toLocaleString()}
 - Email del Cliente: ${customerEmail}
+- Player ID: ${order.playerId || 'N/A'}
 `,
       };
 

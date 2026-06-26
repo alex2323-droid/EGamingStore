@@ -1225,6 +1225,9 @@ export default function AdminPanel({
                     Usuario
                   </th>
                   <th className="py-3 px-4 font-bold text-on-surface-variant text-sm">
+                    Player ID
+                  </th>
+                  <th className="py-3 px-4 font-bold text-on-surface-variant text-sm">
                     Juego/Paquete
                   </th>
                   <th className="py-3 px-4 font-bold text-on-surface-variant text-sm">
@@ -1245,7 +1248,7 @@ export default function AdminPanel({
                 {orders.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={8}
+                      colSpan={9}
                       className="py-8 text-center text-on-surface-variant"
                     >
                       No hay órdenes disponibles.
@@ -1263,7 +1266,20 @@ export default function AdminPanel({
                       <td className="py-3 px-4 text-sm">
                         {new Date(order.date).toLocaleDateString()}
                       </td>
-                      <td className="py-3 px-4 text-sm">{order.userEmail}</td>
+                      <td className="py-3 px-4 text-sm">
+                        <div className="truncate max-w-[150px] md:max-w-[200px]" title={order.userEmail}>
+                          {order.userEmail}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-sm">
+                        {order.playerId ? (
+                          <div className="text-xs text-tertiary-container font-mono font-bold whitespace-nowrap">
+                            {order.playerId}
+                          </div>
+                        ) : (
+                          <span className="text-on-surface-variant text-xs">-</span>
+                        )}
+                      </td>
                       <td className="py-3 px-4 text-sm">
                         <div className="font-bold">{order.gameName}</div>
                         <div className="text-on-surface-variant text-xs">
