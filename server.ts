@@ -81,7 +81,7 @@ async function startServer() {
       const admins = ['EgamingStore1@gmail.com', 'alexparababi23@gmail.com', 'avila2004alexparababi@gmail.com'];
       
       const mailOptions = {
-        from: EMAIL_USER,
+        from: '"Egaming Store" <' + EMAIL_USER + '>',
         to: admins.join(', '),
         subject: `Nueva Recarga Exitosa - ${order.gameName}`,
         text: `Se ha registrado una nueva recarga.
@@ -96,6 +96,25 @@ Detalles de la orden:
 - Email del Cliente: ${customerEmail}
 - Player ID: ${order.playerId || 'N/A'}
 `,
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
+            <h2 style="color: #3b82f6; margin-bottom: 20px;">Nueva Recarga Registrada</h2>
+            <p>Se ha registrado una nueva recarga en el sistema.</p>
+            <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin: 20px 0;">
+              <h3 style="margin-top: 0; color: #374151;">Detalles de la orden:</h3>
+              <ul style="list-style-type: none; padding-left: 0; color: #4b5563;">
+                <li style="margin-bottom: 8px;"><strong>ID de Orden:</strong> ${order.id}</li>
+                <li style="margin-bottom: 8px;"><strong>Juego:</strong> ${order.gameName}</li>
+                <li style="margin-bottom: 8px;"><strong>Paquete:</strong> ${order.packageName}</li>
+                <li style="margin-bottom: 8px;"><strong>Precio:</strong> Bs ${order.price.toFixed(2)}</li>
+                <li style="margin-bottom: 8px;"><strong>Método de Pago:</strong> ${order.paymentMethod}</li>
+                <li style="margin-bottom: 8px;"><strong>Fecha:</strong> ${new Date(order.date).toLocaleString()}</li>
+                <li style="margin-bottom: 8px;"><strong>Email del Cliente:</strong> ${customerEmail}</li>
+                <li style="margin-bottom: 8px;"><strong>Player ID:</strong> ${order.playerId || 'N/A'}</li>
+              </ul>
+            </div>
+          </div>
+        `
       };
 
       await transporter.sendMail(mailOptions);
@@ -116,18 +135,54 @@ Detalles de la orden:
       if (status === 'completed') {
         subject = `Recarga Completada Exitosamente - ${order.gameName}`;
         text = `Hola,\n\nTu recarga ha sido procesada y completada con éxito.\n\nDetalles de la orden:\n- ID de Orden: ${order.id}\n- Juego: ${order.gameName}\n- Paquete: ${order.packageName}\n- Player ID: ${order.playerId || 'N/A'}\n- Fecha de Orden: ${new Date(order.date).toLocaleString()}\n\n¡Gracias por tu compra en Egaming Store!\n`;
+        html = `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
+            <h2 style="color: #10b981; margin-bottom: 20px;">¡Recarga Completada Exitosamente!</h2>
+            <p>Hola,</p>
+            <p>Tu recarga ha sido procesada y completada con éxito.</p>
+            <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin: 20px 0;">
+              <h3 style="margin-top: 0; color: #374151;">Detalles de la orden:</h3>
+              <ul style="list-style-type: none; padding-left: 0; color: #4b5563;">
+                <li style="margin-bottom: 8px;"><strong>ID de Orden:</strong> ${order.id}</li>
+                <li style="margin-bottom: 8px;"><strong>Juego:</strong> ${order.gameName}</li>
+                <li style="margin-bottom: 8px;"><strong>Paquete:</strong> ${order.packageName}</li>
+                <li style="margin-bottom: 8px;"><strong>Player ID:</strong> ${order.playerId || 'N/A'}</li>
+                <li style="margin-bottom: 8px;"><strong>Fecha:</strong> ${new Date(order.date).toLocaleString()}</li>
+              </ul>
+            </div>
+            <p style="color: #6b7280; font-size: 0.9em;">¡Gracias por tu compra en Egaming Store!</p>
+          </div>
+        `;
       } else if (status === 'rejected') {
         subject = `Recarga Rechazada - ${order.gameName}`;
         text = `Hola,\n\nLamentamos informarte que tu recarga ha sido rechazada.\n\nDetalles de la orden:\n- ID de Orden: ${order.id}\n- Juego: ${order.gameName}\n- Paquete: ${order.packageName}\n- Fecha de Orden: ${new Date(order.date).toLocaleString()}\n\nPor favor, contacta a soporte para más detalles.\n`;
+        html = `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
+            <h2 style="color: #ef4444; margin-bottom: 20px;">Recarga Rechazada</h2>
+            <p>Hola,</p>
+            <p>Lamentamos informarte que tu recarga ha sido rechazada.</p>
+            <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin: 20px 0;">
+              <h3 style="margin-top: 0; color: #374151;">Detalles de la orden:</h3>
+              <ul style="list-style-type: none; padding-left: 0; color: #4b5563;">
+                <li style="margin-bottom: 8px;"><strong>ID de Orden:</strong> ${order.id}</li>
+                <li style="margin-bottom: 8px;"><strong>Juego:</strong> ${order.gameName}</li>
+                <li style="margin-bottom: 8px;"><strong>Paquete:</strong> ${order.packageName}</li>
+                <li style="margin-bottom: 8px;"><strong>Fecha:</strong> ${new Date(order.date).toLocaleString()}</li>
+              </ul>
+            </div>
+            <p style="color: #6b7280; font-size: 0.9em;">Por favor, contacta a soporte para más detalles.</p>
+          </div>
+        `;
       } else {
         return res.json({ success: true, message: 'Status does not require notification' });
       }
 
       const mailOptions = {
-        from: EMAIL_USER,
+        from: '"Egaming Store" <' + EMAIL_USER + '>',
         to: customerEmail,
         subject,
         text,
+        html,
       };
 
       await transporter.sendMail(mailOptions);
