@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Mail, Lock, AlertCircle, KeyRound, ArrowLeft, ArrowRight, UserPlus, LogIn } from "lucide-react";
+import { Mail, Lock, AlertCircle, UserPlus, LogIn } from "lucide-react";
 import { auth } from "../firebase";
 import {
   signInWithEmailAndPassword,
@@ -21,9 +21,7 @@ export default function Login({ onLoginSuccess, siteSettings }: Props) {
   const [signInPassword, setSignInPassword] = useState("");
   
   // Register States
-  const [registerStep, setRegisterStep] = useState<1 | 2 | 3>(1);
   const [registerEmail, setRegisterEmail] = useState("");
-  const [verificationCode, setVerificationCode] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +32,7 @@ export default function Login({ onLoginSuccess, siteSettings }: Props) {
 
   useEffect(() => {
     setError(null);
-  }, [activeTab, registerStep]);
+  }, [activeTab]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,7 +82,7 @@ export default function Login({ onLoginSuccess, siteSettings }: Props) {
     }
   };
 
-  const handleSendCode = async (e: React.FormEvent) => {
+  const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     
@@ -99,63 +97,6 @@ export default function Login({ onLoginSuccess, siteSettings }: Props) {
       return;
     }
 
-    setLoading(true);
-
-    try {
-      const res = await fetch('/api/send-verification', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      });
-      const data = await res.json();
-      
-      if (data.success) {
-        setRegisterStep(2);
-      } else {
-        setError(data.error || "No se pudo enviar el código de verificación.");
-      }
-    } catch (e) {
-      setError("Error al enviar el código de verificación.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyCode = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    
-    if (verificationCode.length !== 6) {
-      setError("El código debe tener 6 dígitos.");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const res = await fetch('/api/verify-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: registerEmail.trim(), code: verificationCode })
-      });
-      const data = await res.json();
-      
-      if (data.success) {
-        setRegisterStep(3);
-      } else {
-        setError(data.error || "Código inválido o expirado.");
-      }
-    } catch (e) {
-      setError("Error al verificar el código.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCreateAccount = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    
     if (registerPassword.length < 6) {
       setError("La contraseña debe tener al menos 6 caracteres.");
       return;
@@ -164,7 +105,7 @@ export default function Login({ onLoginSuccess, siteSettings }: Props) {
     setLoading(true);
 
     try {
-      await createUserWithEmailAndPassword(auth, registerEmail.trim(), registerPassword);
+      await createUserWithEmailAndPassword(auth, email, registerPassword);
       onLoginSuccess();
     } catch (createErr: any) {
       if (createErr.code === "auth/email-already-in-use") {
@@ -205,7 +146,6 @@ export default function Login({ onLoginSuccess, siteSettings }: Props) {
             <button
               onClick={() => {
                 setActiveTab("signIn");
-                setRegisterStep(1);
               }}
               className={`flex-1 py-2.5 text-sm font-bold uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-2 ${
                 activeTab === "signIn"
@@ -284,10 +224,9 @@ export default function Login({ onLoginSuccess, siteSettings }: Props) {
             </form>
           ) : (
             <div className="space-y-4">
-              {registerStep === 1 && (
-                <form onSubmit={handleSendCode} className="space-y-4 animation-fade-in">
+                <form onSubmit={handleCreateAccount} className="space-y-4 animation-fade-in">
                   <p className="text-sm text-on-surface-variant text-center mb-2">
-                    Ingresa tu correo para recibir un código de verificación.
+                    Crea una cuenta para comenzar a recargar.
                   </p>
                   <div>
                     <label className="block text-sm font-bold text-on-surface-variant mb-1.5 uppercase tracking-wider">
@@ -307,73 +246,10 @@ export default function Login({ onLoginSuccess, siteSettings }: Props) {
                       />
                     </div>
                   </div>
-                  <button
-                    type="submit"
-                    disabled={loading || !registerEmail}
-                    className="w-full btn-primary btn-primary-hover text-white font-bold py-3.5 rounded-xl transition-all shadow-lg mt-6 flex justify-center items-center gap-2 disabled:opacity-50"
-                  >
-                    {loading ? "Enviando..." : "Enviar Código"} <ArrowRight size={18} />
-                  </button>
-                </form>
-              )}
-
-              {registerStep === 2 && (
-                <form onSubmit={handleVerifyCode} className="space-y-4 animation-fade-in">
-                  <p className="text-sm text-on-surface-variant text-center mb-2">
-                    Hemos enviado un código a <br/>
-                    <strong className="text-on-surface">{registerEmail}</strong>
-                  </p>
-                  <div>
-                    <label className="block text-sm font-bold text-on-surface-variant mb-1.5 uppercase tracking-wider">
-                      Código de Verificación
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-on-surface-variant">
-                        <KeyRound size={18} />
-                      </div>
-                      <input
-                        type="text"
-                        value={verificationCode}
-                        onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                        required
-                        maxLength={6}
-                        className="w-full bg-surface-container-low border border-glass-border rounded-xl py-3 pl-10 pr-4 text-on-surface text-center tracking-widest font-mono text-lg focus:outline-none focus:border-primary transition-colors"
-                        placeholder="000000"
-                      />
-                    </div>
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={loading || verificationCode.length !== 6}
-                    className="w-full btn-primary btn-primary-hover text-white font-bold py-3.5 rounded-xl transition-all shadow-lg mt-6 flex justify-center items-center gap-2 disabled:opacity-50"
-                  >
-                    {loading ? "Verificando..." : "Verificar Código"} <ArrowRight size={18} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setRegisterStep(1);
-                      setVerificationCode("");
-                    }}
-                    className="w-full flex items-center justify-center gap-2 text-on-surface-variant hover:text-primary transition-colors text-sm font-medium mt-2"
-                  >
-                    <ArrowLeft size={16} /> Modificar correo
-                  </button>
-                </form>
-              )}
-
-              {registerStep === 3 && (
-                <form onSubmit={handleCreateAccount} className="space-y-4 animation-fade-in">
-                  <div className="text-center mb-4">
-                     <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-500/20 text-green-500 mb-2">
-                       <Mail size={24} />
-                     </div>
-                     <p className="text-sm text-green-400 font-medium">¡Correo verificado con éxito!</p>
-                  </div>
 
                   <div>
                     <label className="block text-sm font-bold text-on-surface-variant mb-1.5 uppercase tracking-wider">
-                      Crea tu Contraseña
+                      Contraseña
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-on-surface-variant">
@@ -393,13 +269,12 @@ export default function Login({ onLoginSuccess, siteSettings }: Props) {
                   </div>
                   <button
                     type="submit"
-                    disabled={loading || registerPassword.length < 6}
+                    disabled={loading || registerPassword.length < 6 || !registerEmail}
                     className="w-full btn-primary btn-primary-hover text-white font-bold py-3.5 rounded-xl transition-all shadow-lg mt-6 flex justify-center items-center gap-2 disabled:opacity-50"
                   >
-                    {loading ? "Creando..." : "Finalizar Registro"}
+                    {loading ? "Creando..." : "Crear Cuenta"}
                   </button>
                 </form>
-              )}
             </div>
           )}
         </div>
