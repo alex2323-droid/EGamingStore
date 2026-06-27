@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   PromoCode,
   Game,
@@ -107,18 +107,49 @@ export default function AdminPanel({
     );
   };
 
+  const compressImage = (file: File, callback: (dataUrl: string) => void) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX_WIDTH = 800;
+        const MAX_HEIGHT = 800;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL("image/webp", 0.6); // 0.6 quality for lower size
+        callback(dataUrl);
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleImageUpload = (
     e: React.ChangeEvent<HTMLInputElement>,
     field: "bannerUrl" | "cardUrl",
   ) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        handleGameChange(field, base64String);
-      };
-      reader.readAsDataURL(file);
+      compressImage(file, (dataUrl) => {
+        handleGameChange(field, dataUrl);
+      });
     }
   };
 
@@ -128,12 +159,9 @@ export default function AdminPanel({
   ) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        handlePackageChange(packageId, "iconUrl", base64String);
-      };
-      reader.readAsDataURL(file);
+      compressImage(file, (dataUrl) => {
+        handlePackageChange(packageId, "iconUrl", dataUrl);
+      });
     }
   };
 
@@ -208,7 +236,8 @@ export default function AdminPanel({
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const handleSave = async () => {
+  const handleSave = async (isAutoSave: boolean | React.MouseEvent = false) => {
+    const autoSave = isAutoSave === true;
     setIsSaving(true);
     setErrorMessage("");
     const resGames = await onUpdateGames(localGames);
@@ -220,14 +249,30 @@ export default function AdminPanel({
       : true;
 
     if (resGames !== false && resPromos !== false && resSettings !== false) {
-      setShowSuccessMessage(true);
-      setTimeout(() => setShowSuccessMessage(false), 3000);
+      if (!autoSave) {
+        setShowSuccessMessage(true);
+        setTimeout(() => setShowSuccessMessage(false), 3000);
+      }
     } else {
       setErrorMessage("Error al guardar. Verifica los permisos.");
       setTimeout(() => setErrorMessage(""), 5000);
     }
     setIsSaving(false);
   };
+
+  const isInitialMount = useRef(true);
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    
+    const timeoutId = setTimeout(() => {
+      handleSave(true);
+    }, 1000);
+
+    return () => clearTimeout(timeoutId);
+  }, [localGames, localPromoCodes, localSettings]);
 
   const handleAddPromoCode = () => {
     const newCode: PromoCode = {
@@ -651,15 +696,15 @@ export default function AdminPanel({
                           </label>
                           <input
                             type="number"
-                            value={pkg.discountPercentage || ""}
+                            value={pkg.discountPercentage ?? ""}
                             placeholder="0"
                             onChange={(e) =>
                               handlePackageChange(
                                 pkg.id,
                                 "discountPercentage",
-                                e.target.value
-                                  ? Number(e.target.value)
-                                  : undefined,
+                                e.target.value === ""
+                                  ? undefined
+                                  : Number(e.target.value),
                               )
                             }
                             className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-white focus:border-primary focus:outline-none"
@@ -671,15 +716,15 @@ export default function AdminPanel({
                           </label>
                           <input
                             type="number"
-                            value={pkg.bonus || ""}
+                            value={pkg.bonus ?? ""}
                             placeholder="0"
                             onChange={(e) =>
                               handlePackageChange(
                                 pkg.id,
                                 "bonus",
-                                e.target.value
-                                  ? Number(e.target.value)
-                                  : undefined,
+                                e.target.value === ""
+                                  ? undefined
+                                  : Number(e.target.value),
                               )
                             }
                             className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-white focus:border-primary focus:outline-none"
@@ -1218,19 +1263,19 @@ export default function AdminPanel({
                   <th className="py-3 px-4 font-bold text-on-surface-variant text-sm">
                     ID Orden
                   </th>
-                  <th className="py-3 px-4 font-bold text-on-surface-variant text-sm">
+                  <th className="py-3 px-4 font-bold text-on-surface-variant text-sm hidden md:table-cell">
                     Fecha
                   </th>
-                  <th className="py-3 px-4 font-bold text-on-surface-variant text-sm">
+                  <th className="py-3 px-4 font-bold text-on-surface-variant text-sm hidden md:table-cell">
                     Usuario
                   </th>
-                  <th className="py-3 px-4 font-bold text-on-surface-variant text-sm">
+                  <th className="py-3 px-4 font-bold text-on-surface-variant text-sm hidden lg:table-cell">
                     Player ID
                   </th>
                   <th className="py-3 px-4 font-bold text-on-surface-variant text-sm">
                     Juego/Paquete
                   </th>
-                  <th className="py-3 px-4 font-bold text-on-surface-variant text-sm">
+                  <th className="py-3 px-4 font-bold text-on-surface-variant text-sm hidden sm:table-cell">
                     Referencia
                   </th>
                   <th className="py-3 px-4 font-bold text-on-surface-variant text-sm">
@@ -1260,18 +1305,18 @@ export default function AdminPanel({
                       key={order.id}
                       className="border-b border-glass-border/50 hover:bg-surface-elevated/50 transition-colors"
                     >
-                      <td className="py-3 px-4 text-sm font-mono">
+                      <td className="py-3 px-4 text-sm font-mono whitespace-nowrap">
                         {order.id}
                       </td>
-                      <td className="py-3 px-4 text-sm">
+                      <td className="py-3 px-4 text-sm hidden md:table-cell">
                         {new Date(order.date).toLocaleDateString()}
                       </td>
-                      <td className="py-3 px-4 text-sm">
-                        <div className="truncate max-w-[150px] md:max-w-[200px]" title={order.userEmail}>
+                      <td className="py-3 px-4 text-sm hidden md:table-cell">
+                        <div className="truncate max-w-[150px]" title={order.userEmail}>
                           {order.userEmail}
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-sm">
+                      <td className="py-3 px-4 text-sm hidden lg:table-cell">
                         {order.playerId ? (
                           <div className="text-xs text-tertiary-container font-mono font-bold whitespace-nowrap">
                             {order.playerId}
@@ -1281,15 +1326,15 @@ export default function AdminPanel({
                         )}
                       </td>
                       <td className="py-3 px-4 text-sm">
-                        <div className="font-bold">{order.gameName}</div>
-                        <div className="text-on-surface-variant text-xs">
+                        <div className="font-bold truncate max-w-[120px] md:max-w-none">{order.gameName}</div>
+                        <div className="text-on-surface-variant text-xs truncate max-w-[120px] md:max-w-none">
                           {order.packageName}
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-sm font-mono text-tertiary-container">
+                      <td className="py-3 px-4 text-sm font-mono text-tertiary-container hidden sm:table-cell">
                         {order.referenceNumber || "-"}
                       </td>
-                      <td className="py-3 px-4 text-sm font-bold text-primary">
+                      <td className="py-3 px-4 text-sm font-bold text-primary whitespace-nowrap">
                         Bs {order.price.toFixed(2)}
                       </td>
                       <td className="py-3 px-4 text-center">
@@ -1354,8 +1399,14 @@ export default function AdminPanel({
       ) : null}
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-surface-container border border-glass-border rounded-2xl w-full max-w-sm overflow-hidden flex flex-col items-center justify-center text-center p-6 shadow-2xl">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in"
+          onClick={() => setShowDeleteModal(false)}
+        >
+          <div 
+            className="bg-surface-container border border-glass-border rounded-2xl w-full max-w-sm overflow-hidden flex flex-col items-center justify-center text-center p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="w-16 h-16 bg-red-500/20 text-red-500 rounded-full flex items-center justify-center mb-4">
               <Trash2 size={32} />
             </div>
@@ -1386,13 +1437,19 @@ export default function AdminPanel({
 
       {/* Order Details Modal */}
       {selectedOrderDetails && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-surface-container border border-glass-border rounded-2xl w-full max-w-lg overflow-hidden flex flex-col shadow-2xl">
-            <div className="flex justify-between items-center p-6 border-b border-glass-border">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in"
+          onClick={() => setSelectedOrderDetails(null)}
+        >
+          <div 
+            className="bg-surface-container border border-glass-border rounded-2xl w-full max-w-lg overflow-hidden flex flex-col shadow-2xl max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center p-6 border-b border-glass-border sticky top-0 bg-surface-container z-10">
               <h3 className="text-xl font-bold text-white">Detalles del Pago</h3>
               <button
                 onClick={() => setSelectedOrderDetails(null)}
-                className="text-on-surface-variant hover:text-white transition-colors"
+                className="text-on-surface-variant hover:text-white transition-colors bg-surface-elevated p-2 rounded-full"
               >
                 <X size={24} />
               </button>
@@ -1457,6 +1514,18 @@ export default function AdminPanel({
                   </span>
                 </div>
               </div>
+              {selectedOrderDetails.receiptUrl && (
+                <div className="mt-4 border-t border-glass-border pt-4">
+                  <p className="text-on-surface-variant font-bold mb-2">Comprobante Adjunto</p>
+                  <div className="w-full bg-black/40 rounded-lg p-2 border border-glass-border flex justify-center">
+                    <img 
+                      src={selectedOrderDetails.receiptUrl} 
+                      alt="Comprobante de pago" 
+                      className="max-h-64 object-contain rounded"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
             {selectedOrderDetails.status === "pending" && onUpdateOrder && (
               <div className="flex gap-3 w-full p-6 border-t border-glass-border bg-surface-elevated/50">

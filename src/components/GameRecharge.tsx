@@ -24,7 +24,7 @@ export default function GameRecharge({ game, paymentMethods, promoCodes, onBack,
   const selectedPayment = paymentMethods.find(m => m.id === selectedPaymentId);
 
   return (
-    <div className="w-full animation-fade-in pb-12 md:pb-0">
+    <div className="w-full animation-fade-in pb-24 md:pb-8">
       <div className="max-w-7xl mx-auto px-4 pt-4 md:pt-8 w-full flex items-center">
         <button 
           onClick={onBack}

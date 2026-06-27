@@ -13,7 +13,6 @@ const defaultPackages: GamePackage[] = [
     amount: 300,
     currency: 'Gold',
     price: 2.99,
-    bonus: 10,
     iconUrl: 'https://cdn-icons-png.flaticon.com/512/2850/2850785.png',
   },
   {
@@ -89,8 +88,10 @@ export const GAMES: Game[] = [
 ];
 
 export const PAYMENT_METHODS: PaymentMethod[] = [
-
-  { id: 'pago_movil', name: 'Pago Móvil', iconType: 'payments' },
-  { id: 'zelle', name: 'Zelle', iconType: 'account_balance' },
-  { id: 'card', name: 'Card', iconType: 'credit_card' },
+  { 
+    id: 'pago_movil', 
+    name: 'Pago Móvil', 
+    iconType: 'payments',
+    instructions: 'Banco: Bancaribe\nCI: 32868567\nTeléfono: 0412-4780457'
+  },
 ];

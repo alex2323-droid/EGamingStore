@@ -1,11 +1,14 @@
-import { Package, CheckCircle2, Clock, XCircle, ChevronRight } from 'lucide-react';
+import { Package, CheckCircle2, Clock, XCircle, ChevronRight, Copy } from 'lucide-react';
 import { Order } from '../types';
+import { useState } from 'react';
 
 interface Props {
   orders: Order[];
 }
 
 export default function OrdersHistory({ orders }: Props) {
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
   const getStatusConfig = (status: string) => {
     switch (status) {
       case 'completed': return { color: 'text-green-400', bg: 'bg-green-400/20', icon: <CheckCircle2 size={16} /> };
@@ -55,7 +58,22 @@ export default function OrdersHistory({ orders }: Props) {
                     <h3 className="font-display font-bold text-on-surface">{order.gameName}</h3>
                     <p className="text-sm font-medium text-on-surface-variant">{order.packageName}</p>
                     <div className="flex items-center gap-2 mt-1 text-xs text-on-surface-variant/70">
-                      <span>{order.id}</span>
+                      <span className="flex items-center gap-1.5">
+                        {order.id}
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(order.id);
+                            setCopiedId(order.id);
+                            setTimeout(() => setCopiedId(null), 2000);
+                          }}
+                          className={`transition-colors p-1 rounded-full ${
+                            copiedId === order.id ? 'text-green-400 bg-green-400/10' : 'hover:text-primary hover:bg-primary/10'
+                          }`}
+                          title="Copiar ID de orden"
+                        >
+                          {copiedId === order.id ? <CheckCircle2 size={12} /> : <Copy size={12} />}
+                        </button>
+                      </span>
                       <span>•</span>
                       <span>{new Date(order.date).toLocaleDateString()}</span>
                     </div>
@@ -84,6 +102,13 @@ export default function OrdersHistory({ orders }: Props) {
                   {order.referenceNumber && (
                     <div className="text-xs text-on-surface-variant font-mono self-start md:self-end">
                       Ref: {order.referenceNumber}
+                    </div>
+                  )}
+                  {order.receiptUrl && (
+                    <div className="mt-2 w-full flex justify-start md:justify-end">
+                      <a href={order.receiptUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1">
+                        Ver comprobante
+                      </a>
                     </div>
                   )}
                 </div>

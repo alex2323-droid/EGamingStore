@@ -177,7 +177,7 @@ export default function Home({ games, siteSettings, onSelectGame }: Props) {
 
           <div className="flex flex-col sm:flex-row gap-4 items-center w-full lg:w-auto">
             {/* Categories */}
-            <div className="flex bg-surface-container rounded-lg p-1 w-full sm:w-auto border border-glass-border shadow-md">
+            <div className="flex bg-surface-container rounded-lg p-1 w-full sm:w-auto border border-glass-border shadow-md overflow-x-auto whitespace-nowrap">
               <button
                 onClick={() => setActiveCategory("all")}
                 className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-bold transition-colors ${activeCategory === "all" ? "bg-primary/20 text-primary shadow-sm" : "text-on-surface-variant hover:text-on-surface"}`}
@@ -275,45 +275,6 @@ export default function Home({ games, siteSettings, onSelectGame }: Props) {
           </div>
         )}
       </div>
-
-      {/* Trust Section */}
-      <section className="py-16 bg-surface-container relative border-y border-glass-border mt-8">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 grid grid-cols-2 lg:grid-cols-4 gap-8 text-center relative z-10">
-          <div className="space-y-3">
-            <div className="text-4xl text-primary font-display font-extrabold drop-shadow-lg">
-              100k+
-            </div>
-            <div className="text-on-surface-variant font-bold text-xs md:text-sm uppercase tracking-widest">
-              Usuarios Activos
-            </div>
-          </div>
-          <div className="space-y-3">
-            <div className="text-4xl text-primary font-display font-extrabold drop-shadow-lg">
-              1M+
-            </div>
-            <div className="text-on-surface-variant font-bold text-xs md:text-sm uppercase tracking-widest">
-              Recargas Exitosas
-            </div>
-          </div>
-          <div className="space-y-3">
-            <div className="text-4xl text-primary font-display font-extrabold drop-shadow-lg">
-              50+
-            </div>
-            <div className="text-on-surface-variant font-bold text-xs md:text-sm uppercase tracking-widest">
-              Juegos Disponibles
-            </div>
-          </div>
-          <div className="space-y-3">
-            <div className="text-4xl text-primary font-display font-extrabold drop-shadow-lg">
-              4.9/5
-            </div>
-            <div className="text-on-surface-variant font-bold text-xs md:text-sm uppercase tracking-widest">
-              Satisfacción
-            </div>
-          </div>
-        </div>
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-transparent to-background pointer-events-none"></div>
-      </section>
     </div>
   );
 }

@@ -46,6 +46,7 @@ export interface Order {
   userId?: string;
   userEmail?: string;
   playerId?: string;
+  receiptUrl?: string;
 }
 
 export interface SiteSettings {

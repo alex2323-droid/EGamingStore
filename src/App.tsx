@@ -50,7 +50,39 @@ export default function App() {
       try {
         const gamesSnap = await getDocs(collection(db, "games"));
         if (!gamesSnap.empty) {
-          const loadedGames = gamesSnap.docs.map((d) => d.data() as Game);
+          let loadedGames = gamesSnap.docs.map((d) => d.data() as Game);
+          
+          // Migrate games to remove the hardcoded 10% bonus/discount if the user hasn't touched it
+          let changedGames = false;
+          loadedGames = loadedGames.map(game => {
+            let gameChanged = false;
+            const newPackages = game.packages.map(pkg => {
+              const newPkg = { ...pkg };
+              if (newPkg.bonus === 10) {
+                delete newPkg.bonus;
+                gameChanged = true;
+              }
+              if (newPkg.discountPercentage === 10) {
+                delete newPkg.discountPercentage;
+                gameChanged = true;
+              }
+              return newPkg;
+            });
+            if (gameChanged) {
+              changedGames = true;
+              return { ...game, packages: newPackages };
+            }
+            return game;
+          });
+
+          if (changedGames) {
+            const batch = writeBatch(db);
+            loadedGames.forEach(game => {
+              batch.set(doc(db, "games", game.id), game);
+            });
+            await batch.commit();
+          }
+
           setGames(loadedGames);
         } else {
           // If DB is empty, fall back to initial GAMES
@@ -77,7 +109,36 @@ export default function App() {
         const settingsDoc = await getDoc(doc(db, "siteSettings", "general"));
         if (settingsDoc.exists()) {
           const loadedSettings = settingsDoc.data() as SiteSettings;
+          
+          // Migrate payment methods to remove zelle and update pago movil
+          let changed = false;
+          if (loadedSettings.paymentMethods) {
+            const hasZelle = loadedSettings.paymentMethods.some(m => m.id === 'zelle');
+            if (hasZelle) {
+              loadedSettings.paymentMethods = loadedSettings.paymentMethods.filter(m => m.id !== 'zelle');
+              changed = true;
+            }
+            const pagoMovilIndex = loadedSettings.paymentMethods.findIndex(m => m.id === 'pago_movil');
+            if (pagoMovilIndex !== -1 && !loadedSettings.paymentMethods[pagoMovilIndex].instructions?.includes("Bancaribe")) {
+              loadedSettings.paymentMethods[pagoMovilIndex].instructions = 'Banco: Bancaribe\nCI: 32868567\nTeléfono: 0412-4780457';
+              changed = true;
+            }
+          }
+          if (changed) {
+            await setDoc(doc(db, "siteSettings", "general"), loadedSettings);
+          }
+
           setSiteSettings(loadedSettings);
+        } else {
+          // ensure initial DB state has it removed too
+          const newSettings: SiteSettings = {
+            id: 'general',
+            logoUrl: '',
+            whatsappNumber: '',
+            paymentMethods: PAYMENT_METHODS
+          };
+          await setDoc(doc(db, "siteSettings", "general"), newSettings);
+          setSiteSettings(newSettings);
         }
       } catch (error) {
         console.error("Failed to load site settings", error);
@@ -222,6 +283,7 @@ export default function App() {
   };
 
   const handleUpdateGames = async (updatedGames: Game[]) => {
+    const oldGamesMap = new Map(games.map(g => [g.id, JSON.stringify(g)]));
     setGames(updatedGames);
     try {
       const batch = writeBatch(db);
@@ -237,8 +299,28 @@ export default function App() {
       }
 
       for (const game of updatedGames) {
-        const cleanGame = JSON.parse(JSON.stringify(game));
-        batch.set(doc(db, "games", cleanGame.id), cleanGame);
+        const gameStr = JSON.stringify(game);
+        if (oldGamesMap.get(game.id) !== gameStr || !existingIds.includes(game.id)) {
+          const cleanGame = JSON.parse(gameStr);
+          
+          // Firestore has a 1MB limit per document. 
+          // 800,000 characters is a safe threshold to strip oversized base64 images.
+          if (cleanGame.bannerUrl && cleanGame.bannerUrl.length > 800000) {
+            cleanGame.bannerUrl = "";
+          }
+          if (cleanGame.cardUrl && cleanGame.cardUrl.length > 800000) {
+            cleanGame.cardUrl = "";
+          }
+          if (cleanGame.packages) {
+            cleanGame.packages.forEach((pkg: any) => {
+              if (pkg.iconUrl && pkg.iconUrl.length > 800000) {
+                pkg.iconUrl = "";
+              }
+            });
+          }
+
+          batch.set(doc(db, "games", cleanGame.id), cleanGame);
+        }
       }
 
       await batch.commit();
@@ -250,6 +332,7 @@ export default function App() {
   };
 
   const handleUpdatePromoCodes = async (updatedCodes: PromoCode[]) => {
+    const oldCodesMap = new Map(promoCodes.map(c => [c.id, JSON.stringify(c)]));
     setPromoCodes(updatedCodes);
     try {
       const batch = writeBatch(db);
@@ -264,8 +347,11 @@ export default function App() {
       }
 
       for (const code of updatedCodes) {
-        const cleanCode = JSON.parse(JSON.stringify(code));
-        batch.set(doc(db, "promoCodes", cleanCode.id), cleanCode);
+        const codeStr = JSON.stringify(code);
+        if (oldCodesMap.get(code.id) !== codeStr || !existingIds.includes(code.id)) {
+          const cleanCode = JSON.parse(codeStr);
+          batch.set(doc(db, "promoCodes", cleanCode.id), cleanCode);
+        }
       }
 
       await batch.commit();
@@ -279,7 +365,14 @@ export default function App() {
   const handleUpdateSiteSettings = async (settings: SiteSettings) => {
     setSiteSettings(settings);
     try {
-      await setDoc(doc(db, "siteSettings", "general"), settings);
+      const cleanSettings = JSON.parse(JSON.stringify(settings));
+      if (cleanSettings.logoUrl && cleanSettings.logoUrl.length > 800000) {
+        cleanSettings.logoUrl = "";
+      }
+      if (cleanSettings.heroBannerUrl && cleanSettings.heroBannerUrl.length > 800000) {
+        cleanSettings.heroBannerUrl = "";
+      }
+      await setDoc(doc(db, "siteSettings", "general"), cleanSettings);
       return true;
     } catch (err: any) {
       console.error("Failed to save site settings", err);
