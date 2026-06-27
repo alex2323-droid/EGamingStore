@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Mail, Lock, AlertCircle, KeyRound, ArrowLeft } from "lucide-react";
+import { Mail, Lock, AlertCircle, KeyRound, ArrowLeft, ArrowRight, UserPlus, LogIn } from "lucide-react";
 import { auth } from "../firebase";
 import {
   signInWithEmailAndPassword,
@@ -14,28 +14,34 @@ interface Props {
 }
 
 export default function Login({ onLoginSuccess, siteSettings }: Props) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [activeTab, setActiveTab] = useState<"signIn" | "register">("signIn");
+  
+  // Sign In States
+  const [signInEmail, setSignInEmail] = useState("");
+  const [signInPassword, setSignInPassword] = useState("");
+  
+  // Register States
+  const [registerStep, setRegisterStep] = useState<1 | 2 | 3>(1);
+  const [registerEmail, setRegisterEmail] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [registerPassword, setRegisterPassword] = useState("");
+  
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  
-  // Verification states
-  const [verificationMode, setVerificationMode] = useState(false);
-  const [verificationCode, setVerificationCode] = useState("");
-  const [pendingUser, setPendingUser] = useState<{email: string, password: string} | null>(null);
   
   const showMascot = siteSettings ? siteSettings.showMascotLogin : true;
   const currentMascotUrl = siteSettings?.mascotLoginUrl || mascotImg;
 
   useEffect(() => {
-  }, []);
+    setError(null);
+  }, [activeTab, registerStep]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    const inputVal = email.trim();
+    const inputVal = signInEmail.trim();
     if (!inputVal) {
       setError("Por favor, ingresa tu correo o nombre de usuario.");
       setLoading(false);
@@ -43,9 +49,7 @@ export default function Login({ onLoginSuccess, siteSettings }: Props) {
     }
 
     let formattedEmail = inputVal;
-    let isUsername = false;
     if (!formattedEmail.includes("@")) {
-      isUsername = true;
       const sanitizedUsername = formattedEmail.replace(/[^a-zA-Z0-9_.-]/g, "");
       if (!sanitizedUsername) {
         setError("El nombre de usuario contiene caracteres no válidos.");
@@ -62,93 +66,114 @@ export default function Login({ onLoginSuccess, siteSettings }: Props) {
         console.warn("localStorage access denied", e);
       }
 
-      try {
-        await signInWithEmailAndPassword(auth, formattedEmail, password);
-        onLoginSuccess();
-      } catch (signInErr: any) {
-        if (
-          signInErr.code === "auth/user-not-found" ||
-          signInErr.code === "auth/invalid-credential" ||
-          signInErr.code === "auth/invalid-login-credentials"
-        ) {
-          // Trigger verification flow instead of direct creation
-          if (isUsername || formattedEmail.endsWith("@egamingstore.com")) {
-            setError("Para crear una cuenta nueva, debes usar un correo electrónico válido, no un nombre de usuario.");
-            setLoading(false);
-            return;
-          }
-
-          try {
-            const res = await fetch('/api/send-verification', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email: formattedEmail })
-            });
-            const data = await res.json();
-            
-            if (data.success) {
-              setPendingUser({ email: formattedEmail, password });
-              setVerificationMode(true);
-            } else {
-              setError(data.error || "No se pudo enviar el código de verificación.");
-            }
-          } catch (e) {
-            setError("Error al enviar el código de verificación.");
-          }
-          setLoading(false);
-          return;
-        } else if (signInErr.code === "auth/wrong-password") {
-          setError("Contraseña incorrecta.");
-          setLoading(false);
-          return;
-        } else {
-          setError(signInErr.message || "Error de autenticación.");
-          setLoading(false);
-          return;
-        }
+      await signInWithEmailAndPassword(auth, formattedEmail, signInPassword);
+      onLoginSuccess();
+    } catch (signInErr: any) {
+      if (
+        signInErr.code === "auth/user-not-found" ||
+        signInErr.code === "auth/invalid-credential" ||
+        signInErr.code === "auth/invalid-login-credentials"
+      ) {
+        setError("Usuario no encontrado o credenciales inválidas.");
+      } else if (signInErr.code === "auth/wrong-password") {
+        setError("Contraseña incorrecta.");
+      } else {
+        setError(signInErr.message || "Error de autenticación.");
       }
-    } catch (err: any) {
-      setError("Ocurrió un error inesperado.");
+      setLoading(false);
+    }
+  };
+
+  const handleSendCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    
+    const email = registerEmail.trim();
+    if (!email || !email.includes("@")) {
+      setError("Por favor, ingresa un correo electrónico válido.");
+      return;
+    }
+    
+    if (email.endsWith("@egamingstore.com")) {
+      setError("No puedes usar este dominio para registrarte.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/send-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        setRegisterStep(2);
+      } else {
+        setError(data.error || "No se pudo enviar el código de verificación.");
+      }
+    } catch (e) {
+      setError("Error al enviar el código de verificación.");
+    } finally {
       setLoading(false);
     }
   };
 
   const handleVerifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!pendingUser) return;
-    
     setError(null);
+    
+    if (verificationCode.length !== 6) {
+      setError("El código debe tener 6 dígitos.");
+      return;
+    }
+
     setLoading(true);
 
     try {
       const res = await fetch('/api/verify-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: pendingUser.email, code: verificationCode })
+        body: JSON.stringify({ email: registerEmail.trim(), code: verificationCode })
       });
       const data = await res.json();
       
       if (data.success) {
-        // Code is verified, create the user
-        try {
-          await createUserWithEmailAndPassword(auth, pendingUser.email, pendingUser.password);
-          onLoginSuccess();
-        } catch (createErr: any) {
-          if (createErr.code === "auth/email-already-in-use") {
-            setError("Este correo ya está registrado.");
-          } else if (createErr.code === "auth/weak-password") {
-            setError("La contraseña debe tener al menos 6 caracteres.");
-          } else {
-            setError(createErr.message || "Error al crear la cuenta.");
-          }
-          setLoading(false);
-        }
+        setRegisterStep(3);
       } else {
-        setError(data.error || "Código inválido.");
-        setLoading(false);
+        setError(data.error || "Código inválido o expirado.");
       }
     } catch (e) {
       setError("Error al verificar el código.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    
+    if (registerPassword.length < 6) {
+      setError("La contraseña debe tener al menos 6 caracteres.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await createUserWithEmailAndPassword(auth, registerEmail.trim(), registerPassword);
+      onLoginSuccess();
+    } catch (createErr: any) {
+      if (createErr.code === "auth/email-already-in-use") {
+        setError("Este correo ya está registrado.");
+      } else if (createErr.code === "auth/weak-password") {
+        setError("La contraseña debe tener al menos 6 caracteres.");
+      } else {
+        setError(createErr.message || "Error al crear la cuenta.");
+      }
       setLoading(false);
     }
   };
@@ -161,7 +186,7 @@ export default function Login({ onLoginSuccess, siteSettings }: Props) {
         <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-primary/10 blur-3xl rounded-full pointer-events-none"></div>
 
         <div className="relative z-10">
-          {showMascot && !verificationMode && (
+          {showMascot && (
             <div className="flex justify-center mb-6">
               <img
                 src={currentMascotUrl}
@@ -171,20 +196,36 @@ export default function Login({ onLoginSuccess, siteSettings }: Props) {
             </div>
           )}
 
-          {verificationMode && (
-            <div className="flex justify-center mb-6 text-primary">
-              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center border-4 border-surface">
-                <Mail size={40} />
-              </div>
-            </div>
-          )}
-
-          <h1 className="font-display text-2xl font-bold text-center text-on-surface mb-2 uppercase tracking-wide">
+          <h1 className="font-display text-2xl font-bold text-center text-on-surface mb-6 uppercase tracking-wide">
             E Gaming Store
           </h1>
-          <p className="text-center text-on-surface-variant font-medium mb-8">
-            {verificationMode ? "Verificación de Correo" : "Ingresa o crea tu cuenta"}
-          </p>
+
+          {/* Tabs */}
+          <div className="flex bg-surface-container-low p-1 rounded-xl mb-6">
+            <button
+              onClick={() => {
+                setActiveTab("signIn");
+                setRegisterStep(1);
+              }}
+              className={`flex-1 py-2.5 text-sm font-bold uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-2 ${
+                activeTab === "signIn"
+                  ? "bg-primary text-white shadow-md"
+                  : "text-on-surface-variant hover:text-on-surface"
+              }`}
+            >
+              <LogIn size={16} /> Ingresar
+            </button>
+            <button
+              onClick={() => setActiveTab("register")}
+              className={`flex-1 py-2.5 text-sm font-bold uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-2 ${
+                activeTab === "register"
+                  ? "bg-primary text-white shadow-md"
+                  : "text-on-surface-variant hover:text-on-surface"
+              }`}
+            >
+              <UserPlus size={16} /> Registro
+            </button>
+          </div>
 
           {error && (
             <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl flex items-start gap-3 text-sm">
@@ -193,56 +234,8 @@ export default function Login({ onLoginSuccess, siteSettings }: Props) {
             </div>
           )}
 
-          {verificationMode ? (
-            <form onSubmit={handleVerifyCode} className="space-y-4">
-              <p className="text-center text-sm text-on-surface-variant mb-4">
-                Hemos enviado un código de 6 dígitos a <br/>
-                <strong className="text-on-surface">{pendingUser?.email}</strong>
-              </p>
-              
-              <div>
-                <label className="block text-sm font-bold text-on-surface-variant mb-1.5 uppercase tracking-wider">
-                  Código de Verificación
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-on-surface-variant">
-                    <KeyRound size={18} />
-                  </div>
-                  <input
-                    type="text"
-                    value={verificationCode}
-                    onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    required
-                    maxLength={6}
-                    className="w-full bg-surface-container-low border border-glass-border rounded-xl py-3 pl-10 pr-4 text-on-surface text-center tracking-widest font-mono text-lg focus:outline-none focus:border-primary transition-colors"
-                    placeholder="000000"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <button
-                  type="submit"
-                  disabled={loading || verificationCode.length !== 6}
-                  className="w-full btn-primary btn-primary-hover text-white font-bold py-3.5 rounded-xl transition-all shadow-lg flex justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? "Verificando..." : "Verificar y Crear Cuenta"}
-                </button>
-              </div>
-              
-              <button
-                type="button"
-                onClick={() => {
-                  setVerificationMode(false);
-                  setVerificationCode("");
-                }}
-                className="w-full flex items-center justify-center gap-2 text-on-surface-variant hover:text-primary transition-colors text-sm font-medium mt-4"
-              >
-                <ArrowLeft size={16} /> Volver
-              </button>
-            </form>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
+          {activeTab === "signIn" ? (
+            <form onSubmit={handleSignIn} className="space-y-4">
               <div>
                 <label className="block text-sm font-bold text-on-surface-variant mb-1.5 uppercase tracking-wider">
                   Correo o Usuario
@@ -253,8 +246,8 @@ export default function Login({ onLoginSuccess, siteSettings }: Props) {
                   </div>
                   <input
                     type="text"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    value={signInEmail}
+                    onChange={(e) => setSignInEmail(e.target.value)}
                     required
                     className="w-full bg-surface-container-low border border-glass-border rounded-xl py-3 pl-10 pr-4 text-on-surface focus:outline-none focus:border-primary transition-colors"
                     placeholder="ejemplo@correo.com o tu_usuario"
@@ -272,8 +265,8 @@ export default function Login({ onLoginSuccess, siteSettings }: Props) {
                   </div>
                   <input
                     type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    value={signInPassword}
+                    onChange={(e) => setSignInPassword(e.target.value)}
                     required
                     className="w-full bg-surface-container-low border border-glass-border rounded-xl py-3 pl-10 pr-4 text-on-surface focus:outline-none focus:border-primary transition-colors"
                     placeholder="••••••••"
@@ -284,14 +277,134 @@ export default function Login({ onLoginSuccess, siteSettings }: Props) {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full btn-primary btn-primary-hover text-white font-bold py-3.5 rounded-xl transition-all shadow-lg mt-6 flex justify-center"
+                className="w-full btn-primary btn-primary-hover text-white font-bold py-3.5 rounded-xl transition-all shadow-lg mt-6 flex justify-center disabled:opacity-50"
               >
-                {loading ? "Cargando..." : "Ingresar / Registrarse"}
+                {loading ? "Cargando..." : "Iniciar Sesión"}
               </button>
             </form>
+          ) : (
+            <div className="space-y-4">
+              {registerStep === 1 && (
+                <form onSubmit={handleSendCode} className="space-y-4 animation-fade-in">
+                  <p className="text-sm text-on-surface-variant text-center mb-2">
+                    Ingresa tu correo para recibir un código de verificación.
+                  </p>
+                  <div>
+                    <label className="block text-sm font-bold text-on-surface-variant mb-1.5 uppercase tracking-wider">
+                      Correo Electrónico
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-on-surface-variant">
+                        <Mail size={18} />
+                      </div>
+                      <input
+                        type="email"
+                        value={registerEmail}
+                        onChange={(e) => setRegisterEmail(e.target.value)}
+                        required
+                        className="w-full bg-surface-container-low border border-glass-border rounded-xl py-3 pl-10 pr-4 text-on-surface focus:outline-none focus:border-primary transition-colors"
+                        placeholder="ejemplo@correo.com"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={loading || !registerEmail}
+                    className="w-full btn-primary btn-primary-hover text-white font-bold py-3.5 rounded-xl transition-all shadow-lg mt-6 flex justify-center items-center gap-2 disabled:opacity-50"
+                  >
+                    {loading ? "Enviando..." : "Enviar Código"} <ArrowRight size={18} />
+                  </button>
+                </form>
+              )}
+
+              {registerStep === 2 && (
+                <form onSubmit={handleVerifyCode} className="space-y-4 animation-fade-in">
+                  <p className="text-sm text-on-surface-variant text-center mb-2">
+                    Hemos enviado un código a <br/>
+                    <strong className="text-on-surface">{registerEmail}</strong>
+                  </p>
+                  <div>
+                    <label className="block text-sm font-bold text-on-surface-variant mb-1.5 uppercase tracking-wider">
+                      Código de Verificación
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-on-surface-variant">
+                        <KeyRound size={18} />
+                      </div>
+                      <input
+                        type="text"
+                        value={verificationCode}
+                        onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        required
+                        maxLength={6}
+                        className="w-full bg-surface-container-low border border-glass-border rounded-xl py-3 pl-10 pr-4 text-on-surface text-center tracking-widest font-mono text-lg focus:outline-none focus:border-primary transition-colors"
+                        placeholder="000000"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={loading || verificationCode.length !== 6}
+                    className="w-full btn-primary btn-primary-hover text-white font-bold py-3.5 rounded-xl transition-all shadow-lg mt-6 flex justify-center items-center gap-2 disabled:opacity-50"
+                  >
+                    {loading ? "Verificando..." : "Verificar Código"} <ArrowRight size={18} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRegisterStep(1);
+                      setVerificationCode("");
+                    }}
+                    className="w-full flex items-center justify-center gap-2 text-on-surface-variant hover:text-primary transition-colors text-sm font-medium mt-2"
+                  >
+                    <ArrowLeft size={16} /> Modificar correo
+                  </button>
+                </form>
+              )}
+
+              {registerStep === 3 && (
+                <form onSubmit={handleCreateAccount} className="space-y-4 animation-fade-in">
+                  <div className="text-center mb-4">
+                     <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-500/20 text-green-500 mb-2">
+                       <Mail size={24} />
+                     </div>
+                     <p className="text-sm text-green-400 font-medium">¡Correo verificado con éxito!</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-on-surface-variant mb-1.5 uppercase tracking-wider">
+                      Crea tu Contraseña
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-on-surface-variant">
+                        <Lock size={18} />
+                      </div>
+                      <input
+                        type="password"
+                        value={registerPassword}
+                        onChange={(e) => setRegisterPassword(e.target.value)}
+                        required
+                        minLength={6}
+                        className="w-full bg-surface-container-low border border-glass-border rounded-xl py-3 pl-10 pr-4 text-on-surface focus:outline-none focus:border-primary transition-colors"
+                        placeholder="••••••••"
+                      />
+                    </div>
+                    <p className="text-xs text-on-surface-variant mt-1.5">Mínimo 6 caracteres.</p>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={loading || registerPassword.length < 6}
+                    className="w-full btn-primary btn-primary-hover text-white font-bold py-3.5 rounded-xl transition-all shadow-lg mt-6 flex justify-center items-center gap-2 disabled:opacity-50"
+                  >
+                    {loading ? "Creando..." : "Finalizar Registro"}
+                  </button>
+                </form>
+              )}
+            </div>
           )}
         </div>
       </div>
     </div>
   );
 }
+
