@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Mail, Lock, Gamepad2, AlertCircle } from "lucide-react";
+import { Mail, Lock, AlertCircle, KeyRound, ArrowLeft } from "lucide-react";
 import { auth } from "../firebase";
 import {
   signInWithEmailAndPassword,
@@ -19,13 +19,15 @@ export default function Login({ onLoginSuccess, siteSettings }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   
+  // Verification states
+  const [verificationMode, setVerificationMode] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [pendingUser, setPendingUser] = useState<{email: string, password: string} | null>(null);
+  
   const showMascot = siteSettings ? siteSettings.showMascotLogin : true;
   const currentMascotUrl = siteSettings?.mascotLoginUrl || mascotImg;
 
   useEffect(() => {
-    // If the user was logged in previously but session expired,
-    // they need to log in again. We don't automatically sign them in here
-    // unless their session is still fresh. App.tsx should handle that logic.
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -40,9 +42,10 @@ export default function Login({ onLoginSuccess, siteSettings }: Props) {
       return;
     }
 
-    // Determine if email or username under the hood
     let formattedEmail = inputVal;
+    let isUsername = false;
     if (!formattedEmail.includes("@")) {
+      isUsername = true;
       const sanitizedUsername = formattedEmail.replace(/[^a-zA-Z0-9_.-]/g, "");
       if (!sanitizedUsername) {
         setError("El nombre de usuario contiene caracteres no válidos.");
@@ -53,7 +56,6 @@ export default function Login({ onLoginSuccess, siteSettings }: Props) {
     }
 
     try {
-      // Save last login time before authentication to avoid race condition with onAuthStateChanged
       try {
         localStorage.setItem("lastLoginTime", Date.now().toString());
       } catch (e) {
@@ -62,30 +64,39 @@ export default function Login({ onLoginSuccess, siteSettings }: Props) {
 
       try {
         await signInWithEmailAndPassword(auth, formattedEmail, password);
+        onLoginSuccess();
       } catch (signInErr: any) {
-        // If user not found or invalid credential, try to create the account automatically
         if (
           signInErr.code === "auth/user-not-found" ||
           signInErr.code === "auth/invalid-credential" ||
           signInErr.code === "auth/invalid-login-credentials"
         ) {
-          try {
-            await createUserWithEmailAndPassword(
-              auth,
-              formattedEmail,
-              password,
-            );
-          } catch (createErr: any) {
-            if (createErr.code === "auth/email-already-in-use") {
-              setError("Contraseña incorrecta para este usuario.");
-            } else if (createErr.code === "auth/weak-password") {
-              setError("La contraseña debe tener al menos 6 caracteres.");
-            } else {
-              setError(createErr.message || "Error al crear la cuenta.");
-            }
+          // Trigger verification flow instead of direct creation
+          if (isUsername || formattedEmail.endsWith("@egamingstore.com")) {
+            setError("Para crear una cuenta nueva, debes usar un correo electrónico válido, no un nombre de usuario.");
             setLoading(false);
             return;
           }
+
+          try {
+            const res = await fetch('/api/send-verification', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: formattedEmail })
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+              setPendingUser({ email: formattedEmail, password });
+              setVerificationMode(true);
+            } else {
+              setError(data.error || "No se pudo enviar el código de verificación.");
+            }
+          } catch (e) {
+            setError("Error al enviar el código de verificación.");
+          }
+          setLoading(false);
+          return;
         } else if (signInErr.code === "auth/wrong-password") {
           setError("Contraseña incorrecta.");
           setLoading(false);
@@ -96,11 +107,48 @@ export default function Login({ onLoginSuccess, siteSettings }: Props) {
           return;
         }
       }
-
-      onLoginSuccess();
     } catch (err: any) {
       setError("Ocurrió un error inesperado.");
-    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pendingUser) return;
+    
+    setError(null);
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/verify-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: pendingUser.email, code: verificationCode })
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        // Code is verified, create the user
+        try {
+          await createUserWithEmailAndPassword(auth, pendingUser.email, pendingUser.password);
+          onLoginSuccess();
+        } catch (createErr: any) {
+          if (createErr.code === "auth/email-already-in-use") {
+            setError("Este correo ya está registrado.");
+          } else if (createErr.code === "auth/weak-password") {
+            setError("La contraseña debe tener al menos 6 caracteres.");
+          } else {
+            setError(createErr.message || "Error al crear la cuenta.");
+          }
+          setLoading(false);
+        }
+      } else {
+        setError(data.error || "Código inválido.");
+        setLoading(false);
+      }
+    } catch (e) {
+      setError("Error al verificar el código.");
       setLoading(false);
     }
   };
@@ -113,7 +161,7 @@ export default function Login({ onLoginSuccess, siteSettings }: Props) {
         <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-primary/10 blur-3xl rounded-full pointer-events-none"></div>
 
         <div className="relative z-10">
-          {showMascot && (
+          {showMascot && !verificationMode && (
             <div className="flex justify-center mb-6">
               <img
                 src={currentMascotUrl}
@@ -123,11 +171,19 @@ export default function Login({ onLoginSuccess, siteSettings }: Props) {
             </div>
           )}
 
+          {verificationMode && (
+            <div className="flex justify-center mb-6 text-primary">
+              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center border-4 border-surface">
+                <Mail size={40} />
+              </div>
+            </div>
+          )}
+
           <h1 className="font-display text-2xl font-bold text-center text-on-surface mb-2 uppercase tracking-wide">
             E Gaming Store
           </h1>
           <p className="text-center text-on-surface-variant font-medium mb-8">
-            Ingresa o crea tu cuenta automáticamente
+            {verificationMode ? "Verificación de Correo" : "Ingresa o crea tu cuenta"}
           </p>
 
           {error && (
@@ -137,53 +193,103 @@ export default function Login({ onLoginSuccess, siteSettings }: Props) {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-bold text-on-surface-variant mb-1.5 uppercase tracking-wider">
-                Correo o Usuario
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-on-surface-variant">
-                  <Mail size={18} />
+          {verificationMode ? (
+            <form onSubmit={handleVerifyCode} className="space-y-4">
+              <p className="text-center text-sm text-on-surface-variant mb-4">
+                Hemos enviado un código de 6 dígitos a <br/>
+                <strong className="text-on-surface">{pendingUser?.email}</strong>
+              </p>
+              
+              <div>
+                <label className="block text-sm font-bold text-on-surface-variant mb-1.5 uppercase tracking-wider">
+                  Código de Verificación
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-on-surface-variant">
+                    <KeyRound size={18} />
+                  </div>
+                  <input
+                    type="text"
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    required
+                    maxLength={6}
+                    className="w-full bg-surface-container-low border border-glass-border rounded-xl py-3 pl-10 pr-4 text-on-surface text-center tracking-widest font-mono text-lg focus:outline-none focus:border-primary transition-colors"
+                    placeholder="000000"
+                  />
                 </div>
-                <input
-                  type="text"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full bg-surface-container-low border border-glass-border rounded-xl py-3 pl-10 pr-4 text-on-surface focus:outline-none focus:border-primary transition-colors"
-                  placeholder="ejemplo@correo.com o tu_usuario"
-                />
               </div>
-            </div>
 
-            <div>
-              <label className="block text-sm font-bold text-on-surface-variant mb-1.5 uppercase tracking-wider">
-                Contraseña
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-on-surface-variant">
-                  <Lock size={18} />
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={loading || verificationCode.length !== 6}
+                  className="w-full btn-primary btn-primary-hover text-white font-bold py-3.5 rounded-xl transition-all shadow-lg flex justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? "Verificando..." : "Verificar y Crear Cuenta"}
+                </button>
+              </div>
+              
+              <button
+                type="button"
+                onClick={() => {
+                  setVerificationMode(false);
+                  setVerificationCode("");
+                }}
+                className="w-full flex items-center justify-center gap-2 text-on-surface-variant hover:text-primary transition-colors text-sm font-medium mt-4"
+              >
+                <ArrowLeft size={16} /> Volver
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-on-surface-variant mb-1.5 uppercase tracking-wider">
+                  Correo o Usuario
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-on-surface-variant">
+                    <Mail size={18} />
+                  </div>
+                  <input
+                    type="text"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="w-full bg-surface-container-low border border-glass-border rounded-xl py-3 pl-10 pr-4 text-on-surface focus:outline-none focus:border-primary transition-colors"
+                    placeholder="ejemplo@correo.com o tu_usuario"
+                  />
                 </div>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full bg-surface-container-low border border-glass-border rounded-xl py-3 pl-10 pr-4 text-on-surface focus:outline-none focus:border-primary transition-colors"
-                  placeholder="••••••••"
-                />
               </div>
-            </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full btn-primary btn-primary-hover text-white font-bold py-3.5 rounded-xl transition-all shadow-lg mt-6 flex justify-center"
-            >
-              {loading ? "Cargando..." : "Ingresar / Registrarse"}
-            </button>
-          </form>
+              <div>
+                <label className="block text-sm font-bold text-on-surface-variant mb-1.5 uppercase tracking-wider">
+                  Contraseña
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-on-surface-variant">
+                    <Lock size={18} />
+                  </div>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="w-full bg-surface-container-low border border-glass-border rounded-xl py-3 pl-10 pr-4 text-on-surface focus:outline-none focus:border-primary transition-colors"
+                    placeholder="••••••••"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full btn-primary btn-primary-hover text-white font-bold py-3.5 rounded-xl transition-all shadow-lg mt-6 flex justify-center"
+              >
+                {loading ? "Cargando..." : "Ingresar / Registrarse"}
+              </button>
+            </form>
+          )}
         </div>
       </div>
     </div>
