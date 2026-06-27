@@ -132,9 +132,12 @@ export default function App() {
         } else {
           // ensure initial DB state has it removed too
           const newSettings: SiteSettings = {
-            id: 'general',
-            logoUrl: '',
-            whatsappNumber: '',
+            mascotHomeUrl: "",
+            mascotSupportUrl: "",
+            mascotLoginUrl: "",
+            showMascotHome: true,
+            showMascotSupport: true,
+            showMascotLogin: true,
             paymentMethods: PAYMENT_METHODS
           };
           await setDoc(doc(db, "siteSettings", "general"), newSettings);

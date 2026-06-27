@@ -73,7 +73,7 @@ export default function Profile({ orders }: Props) {
             </div>
             <div className="flex justify-between items-end">
               <span className="text-on-surface font-medium">Invertido</span>
-              <span className="font-display font-bold text-xl text-white">Bs {totalSpent.toFixed(2)}</span>
+              <span className="font-display font-bold text-xl text-on-surface">Bs {totalSpent.toFixed(2)}</span>
             </div>
           </div>
         </div>

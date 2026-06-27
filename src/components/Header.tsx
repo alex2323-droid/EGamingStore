@@ -1,4 +1,5 @@
 import { Menu, User, Mail, Home, ShieldAlert } from 'lucide-react';
+import ThemeSwitcher from './ThemeSwitcher';
 
 interface Props {
   activeTab: string;
@@ -23,7 +24,8 @@ export default function Header({ activeTab, isAdmin, onNavigate }: Props) {
       >
         E Gaming Store
       </button>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 sm:gap-2">
+        <ThemeSwitcher />
         {isAdmin && (
           <button 
             onClick={() => onNavigate('admin')}

@@ -53,7 +53,7 @@ export default function Home({ games, siteSettings, onSelectGame }: Props) {
 
         <div className="relative z-10 px-4 md:px-8 max-w-7xl mx-auto w-full">
           <div className="max-w-xl space-y-6">
-            <h1 className="font-display text-4xl md:text-6xl font-extrabold text-white leading-tight uppercase tracking-tight">
+            <h1 className="font-display text-4xl md:text-6xl font-extrabold text-on-surface leading-tight uppercase tracking-tight">
               E GAMING <br />
               <span className="text-primary">STORE</span>
             </h1>
@@ -82,7 +82,7 @@ export default function Home({ games, siteSettings, onSelectGame }: Props) {
                     .getElementById("games-section")
                     ?.scrollIntoView({ behavior: "smooth" });
                 }}
-                className="glass-panel px-8 py-4 rounded-xl font-bold text-white border border-glass-border hover:bg-surface-variant/40 transition-colors"
+                className="glass-panel px-8 py-4 rounded-xl font-bold text-on-surface border border-glass-border hover:bg-surface-variant/40 transition-colors"
               >
                 Ver Ofertas
               </button>
@@ -113,7 +113,7 @@ export default function Home({ games, siteSettings, onSelectGame }: Props) {
                 <span className="text-primary font-bold tracking-widest uppercase text-sm">
                   Por qué elegirnos
                 </span>
-                <h2 className="font-display text-3xl md:text-4xl font-extrabold text-white">
+                <h2 className="font-display text-3xl md:text-4xl font-extrabold text-on-surface">
                   Nuestra Promesa de Vuelo
                 </h2>
               </div>
@@ -123,7 +123,7 @@ export default function Home({ games, siteSettings, onSelectGame }: Props) {
                   <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center">
                     <Zap size={24} className="text-primary" />
                   </div>
-                  <h3 className="font-display text-xl font-bold text-white">
+                  <h3 className="font-display text-xl font-bold text-on-surface">
                     Entrega Inmediata
                   </h3>
                   <p className="text-on-surface-variant text-sm font-medium">
@@ -136,7 +136,7 @@ export default function Home({ games, siteSettings, onSelectGame }: Props) {
                   <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
                     <ShieldCheck size={24} className="text-blue-400" />
                   </div>
-                  <h3 className="font-display text-xl font-bold text-white">
+                  <h3 className="font-display text-xl font-bold text-on-surface">
                     Pagos Seguros
                   </h3>
                   <p className="text-on-surface-variant text-sm font-medium">
@@ -150,7 +150,7 @@ export default function Home({ games, siteSettings, onSelectGame }: Props) {
                     <Headset size={28} className="text-green-400" />
                   </div>
                   <div>
-                    <h3 className="font-display text-xl font-bold text-white mb-2">
+                    <h3 className="font-display text-xl font-bold text-on-surface mb-2">
                       Soporte 24/7
                     </h3>
                     <p className="text-on-surface-variant text-sm font-medium">
@@ -169,7 +169,7 @@ export default function Home({ games, siteSettings, onSelectGame }: Props) {
         {/* Title & Filters */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-8 gap-6">
           <div>
-            <h2 className="font-display text-2xl md:text-3xl font-bold text-white mb-3">
+            <h2 className="font-display text-2xl md:text-3xl font-bold text-on-surface mb-3">
               Juegos Disponibles
             </h2>
             <div className="h-1.5 w-24 bg-primary rounded-full"></div>
@@ -215,7 +215,7 @@ export default function Home({ games, siteSettings, onSelectGame }: Props) {
                 placeholder="Buscar juego..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-surface-container border border-glass-border rounded-lg py-2.5 pl-10 pr-4 text-sm font-medium text-white focus:outline-none focus:border-primary transition-colors placeholder:text-on-surface-variant shadow-inner"
+                className="w-full bg-surface-container border border-glass-border rounded-lg py-2.5 pl-10 pr-4 text-sm font-medium text-on-surface focus:outline-none focus:border-primary transition-colors placeholder:text-on-surface-variant shadow-inner"
               />
             </div>
           </div>
@@ -256,7 +256,7 @@ export default function Home({ games, siteSettings, onSelectGame }: Props) {
                         ? "PC"
                         : "Consola"}
                   </span>
-                  <h3 className="font-display text-sm md:text-base font-bold text-white leading-tight drop-shadow-md truncate">
+                  <h3 className="font-display text-sm md:text-base font-bold text-on-surface leading-tight drop-shadow-md truncate">
                     {game.name}
                   </h3>
                 </div>
@@ -266,7 +266,7 @@ export default function Home({ games, siteSettings, onSelectGame }: Props) {
         ) : (
           <div className="flex flex-col items-center justify-center py-20 bg-surface-container rounded-2xl border border-glass-border border-dashed mb-16">
             <Gamepad2 size={48} className="text-on-surface-variant mb-4" />
-            <h3 className="font-display text-xl font-bold text-white mb-2">
+            <h3 className="font-display text-xl font-bold text-on-surface mb-2">
               No se encontraron juegos
             </h3>
             <p className="text-on-surface-variant font-medium">

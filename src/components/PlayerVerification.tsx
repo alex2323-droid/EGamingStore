@@ -37,10 +37,14 @@ export default function PlayerVerification({ playerId, setPlayerId, isVerified, 
             type="text" 
             value={playerId}
             onChange={(e) => {
-              setPlayerId(e.target.value);
-              setIsVerified(false);
+              const val = e.target.value.replace(/\D/g, '');
+              if (val.length <= 15) {
+                setPlayerId(val);
+                setIsVerified(false);
+              }
             }}
-            placeholder="Ingresa tu UID de jugador" 
+            placeholder="Ingresa tu UID de jugador (Max 15 dígitos)" 
+            maxLength={15}
             className="w-full bg-surface-dim border border-glass-border rounded-lg py-3 pl-10 pr-4 text-on-surface focus:outline-none focus:border-primary transition-colors placeholder:text-on-surface-variant"
           />
         </div>

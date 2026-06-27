@@ -189,7 +189,7 @@ export default function OrderSummary({ game, selectedPackage, selectedPayment, i
               value={promoCodeInput}
               onChange={(e) => setPromoCodeInput(e.target.value)}
               placeholder="Ej: EMBAJADOR10"
-              className="w-full bg-surface border border-glass-border rounded-lg py-2 pl-9 pr-3 text-white focus:border-primary focus:outline-none uppercase text-sm"
+              className="w-full bg-surface border border-glass-border rounded-lg py-2 pl-9 pr-3 text-on-surface focus:border-primary focus:outline-none uppercase text-sm"
             />
           </div>
           <button 
@@ -211,7 +211,7 @@ export default function OrderSummary({ game, selectedPackage, selectedPayment, i
           value={referenceNumber}
           onChange={(e) => setReferenceNumber(e.target.value)}
           placeholder="Ej: 12345678"
-          className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-white focus:border-primary focus:outline-none text-sm mb-4"
+          className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-on-surface focus:border-primary focus:outline-none text-sm mb-4"
         />
         
         <label className="block text-xs font-bold text-on-surface-variant uppercase mb-2">Comprobante de Pago (Opcional)</label>

@@ -369,7 +369,7 @@ export default function AdminPanel({
 
       <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl md:text-3xl font-bold text-white mb-2">
+          <h1 className="font-display text-2xl md:text-3xl font-bold text-on-surface mb-2">
             Panel de Administración
           </h1>
           <p className="text-on-surface-variant font-medium">
@@ -379,35 +379,35 @@ export default function AdminPanel({
         <div className="flex bg-surface-elevated rounded-lg p-1 border border-glass-border overflow-x-auto">
           <button
             onClick={() => setActiveTab("games")}
-            className={`px-4 py-2 text-sm font-bold rounded-md transition-colors whitespace-nowrap ${activeTab === "games" ? "bg-primary text-white" : "text-on-surface-variant hover:text-white"}`}
+            className={`px-4 py-2 text-sm font-bold rounded-md transition-colors whitespace-nowrap ${activeTab === "games" ? "bg-primary text-on-surface" : "text-on-surface-variant hover:text-on-surface"}`}
           >
             <Gamepad2 size={16} className="inline-block mr-2" />
             Juegos
           </button>
           <button
             onClick={() => setActiveTab("promos")}
-            className={`px-4 py-2 text-sm font-bold rounded-md transition-colors whitespace-nowrap ${activeTab === "promos" ? "bg-primary text-white" : "text-on-surface-variant hover:text-white"}`}
+            className={`px-4 py-2 text-sm font-bold rounded-md transition-colors whitespace-nowrap ${activeTab === "promos" ? "bg-primary text-on-surface" : "text-on-surface-variant hover:text-on-surface"}`}
           >
             <Tag size={16} className="inline-block mr-2" />
             Códigos Promo
           </button>
           <button
             onClick={() => setActiveTab("settings")}
-            className={`px-4 py-2 text-sm font-bold rounded-md transition-colors whitespace-nowrap ${activeTab === "settings" ? "bg-primary text-white" : "text-on-surface-variant hover:text-white"}`}
+            className={`px-4 py-2 text-sm font-bold rounded-md transition-colors whitespace-nowrap ${activeTab === "settings" ? "bg-primary text-on-surface" : "text-on-surface-variant hover:text-on-surface"}`}
           >
             <Settings size={16} className="inline-block mr-2" />
             Config. Web
           </button>
           <button
             onClick={() => setActiveTab("payments")}
-            className={`px-4 py-2 text-sm font-bold rounded-md transition-colors whitespace-nowrap ${activeTab === "payments" ? "bg-primary text-white" : "text-on-surface-variant hover:text-white"}`}
+            className={`px-4 py-2 text-sm font-bold rounded-md transition-colors whitespace-nowrap ${activeTab === "payments" ? "bg-primary text-on-surface" : "text-on-surface-variant hover:text-on-surface"}`}
           >
             <CreditCard size={16} className="inline-block mr-2" />
             Métodos de Pago
           </button>
           <button
             onClick={() => setActiveTab("orders")}
-            className={`px-4 py-2 text-sm font-bold rounded-md transition-colors whitespace-nowrap ${activeTab === "orders" ? "bg-primary text-white" : "text-on-surface-variant hover:text-white"}`}
+            className={`px-4 py-2 text-sm font-bold rounded-md transition-colors whitespace-nowrap ${activeTab === "orders" ? "bg-primary text-on-surface" : "text-on-surface-variant hover:text-on-surface"}`}
           >
             <ShoppingCart size={16} className="inline-block mr-2" />
             Órdenes
@@ -420,7 +420,7 @@ export default function AdminPanel({
           {/* Game List */}
           <div className="col-span-1 border border-glass-border rounded-xl bg-surface-container overflow-hidden h-[fit-content]">
             <div className="bg-surface-elevated p-4 border-b border-glass-border">
-              <h3 className="font-bold text-white uppercase text-sm tracking-wider">
+              <h3 className="font-bold text-on-surface uppercase text-sm tracking-wider">
                 Juegos Disponibles
               </h3>
             </div>
@@ -447,7 +447,7 @@ export default function AdminPanel({
                     )}
                   </div>
                   <div>
-                    <h4 className="font-bold text-sm text-white">
+                    <h4 className="font-bold text-sm text-on-surface">
                       {game.name}
                     </h4>
                     <p className="text-xs text-on-surface-variant">
@@ -478,7 +478,7 @@ export default function AdminPanel({
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                        <Edit2 size={16} className="text-white" />
+                        <Edit2 size={16} className="text-on-surface" />
                       </div>
                       <input
                         type="file"
@@ -488,7 +488,7 @@ export default function AdminPanel({
                       />
                     </div>
                     <div>
-                      <h2 className="font-display text-xl md:text-2xl font-bold text-white">
+                      <h2 className="font-display text-xl md:text-2xl font-bold text-on-surface">
                         {selectedGame.name}
                       </h2>
                       <p className="text-sm text-primary uppercase tracking-widest font-bold">
@@ -508,7 +508,7 @@ export default function AdminPanel({
 
                 <div className="mb-6 bg-surface-elevated p-4 rounded-xl border border-glass-border">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-bold text-white text-sm">
+                    <h3 className="font-bold text-on-surface text-sm">
                       Información del Juego
                     </h3>
                     <button
@@ -529,7 +529,7 @@ export default function AdminPanel({
                         onChange={(e) =>
                           handleGameChange("name", e.target.value)
                         }
-                        className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-white focus:border-primary focus:outline-none"
+                        className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-on-surface focus:border-primary focus:outline-none"
                       />
                     </div>
                     <div>
@@ -542,14 +542,14 @@ export default function AdminPanel({
                         onChange={(e) =>
                           handleGameChange("currencyName", e.target.value)
                         }
-                        className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-white focus:border-primary focus:outline-none"
+                        className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-on-surface focus:border-primary focus:outline-none"
                       />
                     </div>
                   </div>
                 </div>
 
                 <div className="mb-6 bg-surface-elevated p-4 rounded-xl border border-glass-border">
-                  <h3 className="font-bold text-white text-sm mb-4">
+                  <h3 className="font-bold text-on-surface text-sm mb-4">
                     Imágenes del Juego
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -570,7 +570,7 @@ export default function AdminPanel({
                           </div>
                         )}
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                          <span className="bg-primary px-3 py-1.5 rounded text-white text-xs font-bold flex items-center gap-2">
+                          <span className="bg-primary px-3 py-1.5 rounded text-on-surface text-xs font-bold flex items-center gap-2">
                             <Edit2 size={14} /> Cambiar Banner
                           </span>
                         </div>
@@ -592,7 +592,7 @@ export default function AdminPanel({
                           onChange={(e) =>
                             handleGameChange("bannerUrl", e.target.value)
                           }
-                          className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-white focus:border-primary focus:outline-none"
+                          className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-on-surface focus:border-primary focus:outline-none"
                         />
                       </div>
                     </div>
@@ -613,7 +613,7 @@ export default function AdminPanel({
                           </div>
                         )}
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                          <span className="bg-primary px-3 py-1.5 rounded text-white text-xs font-bold flex items-center gap-2">
+                          <span className="bg-primary px-3 py-1.5 rounded text-on-surface text-xs font-bold flex items-center gap-2">
                             <Edit2 size={14} /> Cambiar
                           </span>
                         </div>
@@ -635,7 +635,7 @@ export default function AdminPanel({
                           onChange={(e) =>
                             handleGameChange("cardUrl", e.target.value)
                           }
-                          className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-white focus:border-primary focus:outline-none"
+                          className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-on-surface focus:border-primary focus:outline-none"
                         />
                       </div>
                     </div>
@@ -669,7 +669,7 @@ export default function AdminPanel({
                                 Number(e.target.value),
                               )
                             }
-                            className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-white focus:border-primary focus:outline-none"
+                            className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-on-surface focus:border-primary focus:outline-none"
                           />
                         </div>
                         <div>
@@ -687,7 +687,7 @@ export default function AdminPanel({
                                 Number(e.target.value),
                               )
                             }
-                            className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-white focus:border-primary focus:outline-none"
+                            className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-on-surface focus:border-primary focus:outline-none"
                           />
                         </div>
                         <div>
@@ -707,7 +707,7 @@ export default function AdminPanel({
                                   : Number(e.target.value),
                               )
                             }
-                            className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-white focus:border-primary focus:outline-none"
+                            className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-on-surface focus:border-primary focus:outline-none"
                           />
                         </div>
                         <div>
@@ -727,7 +727,7 @@ export default function AdminPanel({
                                   : Number(e.target.value),
                               )
                             }
-                            className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-white focus:border-primary focus:outline-none"
+                            className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-on-surface focus:border-primary focus:outline-none"
                           />
                         </div>
                       </div>
@@ -746,7 +746,7 @@ export default function AdminPanel({
                             </span>
                           )}
                           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                            <Edit2 size={16} className="text-white" />
+                            <Edit2 size={16} className="text-on-surface" />
                           </div>
                           <input
                             type="file"
@@ -772,7 +772,7 @@ export default function AdminPanel({
                                 e.target.value,
                               )
                             }
-                            className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-white focus:border-primary focus:outline-none"
+                            className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-on-surface focus:border-primary focus:outline-none"
                           />
                         </div>
                       </div>
@@ -799,7 +799,7 @@ export default function AdminPanel({
             ) : (
               <div className="bg-surface-container border border-glass-border border-dashed rounded-xl p-12 flex flex-col items-center justify-center text-center text-on-surface-variant">
                 <Gamepad2 size={48} className="mb-4 opacity-50" />
-                <h3 className="text-xl font-bold text-white mb-2">
+                <h3 className="text-xl font-bold text-on-surface mb-2">
                   Selecciona un juego
                 </h3>
                 <p>
@@ -813,7 +813,7 @@ export default function AdminPanel({
         <div className="bg-surface-container border border-glass-border rounded-xl p-6">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h2 className="font-display text-xl md:text-2xl font-bold text-white">
+              <h2 className="font-display text-xl md:text-2xl font-bold text-on-surface">
                 Códigos de Descuento
               </h2>
               <p className="text-on-surface-variant text-sm font-medium">
@@ -850,7 +850,7 @@ export default function AdminPanel({
                           e.target.value.toUpperCase(),
                         )
                       }
-                      className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-white focus:border-primary focus:outline-none uppercase"
+                      className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-on-surface focus:border-primary focus:outline-none uppercase"
                     />
                   </div>
                   <div>
@@ -867,7 +867,7 @@ export default function AdminPanel({
                           Number(e.target.value),
                         )
                       }
-                      className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-white focus:border-primary focus:outline-none"
+                      className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-on-surface focus:border-primary focus:outline-none"
                     />
                   </div>
                   <div>
@@ -883,7 +883,7 @@ export default function AdminPanel({
                           e.target.value === "true",
                         )
                       }
-                      className="w-full bg-surface border border-glass-border rounded-lg py-2.5 px-3 text-white focus:border-primary focus:outline-none"
+                      className="w-full bg-surface border border-glass-border rounded-lg py-2.5 px-3 text-on-surface focus:border-primary focus:outline-none"
                     >
                       <option value="true">Sí</option>
                       <option value="false">No</option>
@@ -925,7 +925,7 @@ export default function AdminPanel({
         <div className="bg-surface-container border border-glass-border rounded-xl p-6">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h2 className="font-display text-xl md:text-2xl font-bold text-white">
+              <h2 className="font-display text-xl md:text-2xl font-bold text-on-surface">
                 Configuración Web
               </h2>
               <p className="text-on-surface-variant text-sm font-medium">
@@ -943,7 +943,7 @@ export default function AdminPanel({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="bg-surface-elevated p-6 rounded-xl border border-glass-border">
-              <h3 className="font-bold text-white text-lg mb-4">
+              <h3 className="font-bold text-on-surface text-lg mb-4">
                 Mascota Principal (Inicio)
               </h3>
               <div className="flex flex-col gap-4">
@@ -961,7 +961,7 @@ export default function AdminPanel({
                     </div>
                   )}
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                    <span className="bg-primary px-3 py-1.5 rounded text-white text-xs font-bold flex items-center gap-2">
+                    <span className="bg-primary px-3 py-1.5 rounded text-on-surface text-xs font-bold flex items-center gap-2">
                       <Edit2 size={14} /> Cambiar
                     </span>
                   </div>
@@ -985,7 +985,7 @@ export default function AdminPanel({
                     onChange={(e) =>
                       handleSettingsChange("mascotHomeUrl", e.target.value)
                     }
-                    className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-white focus:border-primary focus:outline-none"
+                    className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-on-surface focus:border-primary focus:outline-none"
                   />
                 </div>
                 <label className="flex items-center gap-2 mt-2 cursor-pointer">
@@ -1005,7 +1005,7 @@ export default function AdminPanel({
             </div>
 
             <div className="bg-surface-elevated p-6 rounded-xl border border-glass-border">
-              <h3 className="font-bold text-white text-lg mb-4">
+              <h3 className="font-bold text-on-surface text-lg mb-4">
                 Mascota de Soporte
               </h3>
               <div className="flex flex-col gap-4">
@@ -1023,7 +1023,7 @@ export default function AdminPanel({
                     </div>
                   )}
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                    <span className="bg-primary px-3 py-1.5 rounded text-white text-xs font-bold flex items-center gap-2">
+                    <span className="bg-primary px-3 py-1.5 rounded text-on-surface text-xs font-bold flex items-center gap-2">
                       <Edit2 size={14} /> Cambiar
                     </span>
                   </div>
@@ -1047,7 +1047,7 @@ export default function AdminPanel({
                     onChange={(e) =>
                       handleSettingsChange("mascotSupportUrl", e.target.value)
                     }
-                    className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-white focus:border-primary focus:outline-none"
+                    className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-on-surface focus:border-primary focus:outline-none"
                   />
                 </div>
                 <label className="flex items-center gap-2 mt-2 cursor-pointer">
@@ -1070,7 +1070,7 @@ export default function AdminPanel({
             </div>
 
             <div className="bg-surface-elevated p-6 rounded-xl border border-glass-border">
-              <h3 className="font-bold text-white text-lg mb-4">
+              <h3 className="font-bold text-on-surface text-lg mb-4">
                 Mascota de Login
               </h3>
               <div className="flex flex-col gap-4">
@@ -1088,7 +1088,7 @@ export default function AdminPanel({
                     </div>
                   )}
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                    <span className="bg-primary px-2 py-1 rounded text-white text-[10px] font-bold flex items-center gap-1">
+                    <span className="bg-primary px-2 py-1 rounded text-on-surface text-[10px] font-bold flex items-center gap-1">
                       <Edit2 size={12} /> Cambiar
                     </span>
                   </div>
@@ -1112,7 +1112,7 @@ export default function AdminPanel({
                     onChange={(e) =>
                       handleSettingsChange("mascotLoginUrl", e.target.value)
                     }
-                    className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-white focus:border-primary focus:outline-none"
+                    className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-on-surface focus:border-primary focus:outline-none"
                   />
                 </div>
                 <label className="flex items-center gap-2 mt-2 cursor-pointer">
@@ -1136,7 +1136,7 @@ export default function AdminPanel({
         <div className="bg-surface-container border border-glass-border rounded-xl p-6">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h2 className="font-display text-xl md:text-2xl font-bold text-white">
+              <h2 className="font-display text-xl md:text-2xl font-bold text-on-surface">
                 Métodos de Pago
               </h2>
               <p className="text-on-surface-variant text-sm font-medium">
@@ -1183,7 +1183,7 @@ export default function AdminPanel({
                         newMethods[index].name = e.target.value;
                         handleSettingsChange("paymentMethods", newMethods);
                       }}
-                      className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-white focus:border-primary focus:outline-none font-bold"
+                      className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-on-surface focus:border-primary focus:outline-none font-bold"
                     />
                   </div>
                   <div className="flex-1">
@@ -1197,7 +1197,7 @@ export default function AdminPanel({
                         newMethods[index].iconType = e.target.value as any;
                         handleSettingsChange("paymentMethods", newMethods);
                       }}
-                      className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-white focus:border-primary focus:outline-none"
+                      className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-on-surface focus:border-primary focus:outline-none"
                     >
                       <option value="payments">Billetes (Pagos)</option>
                       <option value="account_balance">
@@ -1219,7 +1219,7 @@ export default function AdminPanel({
                       handleSettingsChange("paymentMethods", newMethods);
                     }}
                     placeholder="Ej: Banco: Bancaribe\nCédula: 1234567\nTeléfono: 0412-1234567"
-                    className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-white focus:border-primary focus:outline-none min-h-[100px] resize-y font-mono text-sm"
+                    className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-on-surface focus:border-primary focus:outline-none min-h-[100px] resize-y font-mono text-sm"
                   />
                 </div>
               </div>
@@ -1247,7 +1247,7 @@ export default function AdminPanel({
         <div className="bg-surface-container border border-glass-border rounded-xl p-6">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h2 className="font-display text-xl md:text-2xl font-bold text-white">
+              <h2 className="font-display text-xl md:text-2xl font-bold text-on-surface">
                 Órdenes
               </h2>
               <p className="text-on-surface-variant text-sm font-medium">
@@ -1410,7 +1410,7 @@ export default function AdminPanel({
             <div className="w-16 h-16 bg-red-500/20 text-red-500 rounded-full flex items-center justify-center mb-4">
               <Trash2 size={32} />
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">
+            <h3 className="text-xl font-bold text-on-surface mb-2">
               ¿Eliminar Juego?
             </h3>
             <p className="text-on-surface-variant font-medium text-sm mb-6">
@@ -1420,7 +1420,7 @@ export default function AdminPanel({
             <div className="flex gap-3 w-full">
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="flex-1 py-3 px-4 rounded-xl font-bold bg-surface border border-glass-border text-white hover:bg-surface-elevated transition-colors"
+                className="flex-1 py-3 px-4 rounded-xl font-bold bg-surface border border-glass-border text-on-surface hover:bg-surface-elevated transition-colors"
               >
                 Cancelar
               </button>
@@ -1446,10 +1446,10 @@ export default function AdminPanel({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center p-6 border-b border-glass-border sticky top-0 bg-surface-container z-10">
-              <h3 className="text-xl font-bold text-white">Detalles del Pago</h3>
+              <h3 className="text-xl font-bold text-on-surface">Detalles del Pago</h3>
               <button
                 onClick={() => setSelectedOrderDetails(null)}
-                className="text-on-surface-variant hover:text-white transition-colors bg-surface-elevated p-2 rounded-full"
+                className="text-on-surface-variant hover:text-on-surface transition-colors bg-surface-elevated p-2 rounded-full"
               >
                 <X size={24} />
               </button>
@@ -1458,15 +1458,15 @@ export default function AdminPanel({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-on-surface-variant font-bold mb-1">ID de Orden</p>
-                  <p className="text-white font-mono">{selectedOrderDetails.id}</p>
+                  <p className="text-on-surface font-mono">{selectedOrderDetails.id}</p>
                 </div>
                 <div>
                   <p className="text-on-surface-variant font-bold mb-1">Fecha</p>
-                  <p className="text-white">{new Date(selectedOrderDetails.date).toLocaleString()}</p>
+                  <p className="text-on-surface">{new Date(selectedOrderDetails.date).toLocaleString()}</p>
                 </div>
                 <div>
                   <p className="text-on-surface-variant font-bold mb-1">Usuario (Email)</p>
-                  <p className="text-white">{selectedOrderDetails.userEmail || "N/A"}</p>
+                  <p className="text-on-surface">{selectedOrderDetails.userEmail || "N/A"}</p>
                 </div>
                 <div>
                   <p className="text-on-surface-variant font-bold mb-1">ID de Jugador</p>
@@ -1475,15 +1475,15 @@ export default function AdminPanel({
                 <div className="col-span-2 border-t border-glass-border pt-4 mt-2"></div>
                 <div>
                   <p className="text-on-surface-variant font-bold mb-1">Juego</p>
-                  <p className="text-white font-bold">{selectedOrderDetails.gameName}</p>
+                  <p className="text-on-surface font-bold">{selectedOrderDetails.gameName}</p>
                 </div>
                 <div>
                   <p className="text-on-surface-variant font-bold mb-1">Paquete</p>
-                  <p className="text-white">{selectedOrderDetails.packageName}</p>
+                  <p className="text-on-surface">{selectedOrderDetails.packageName}</p>
                 </div>
                 <div>
                   <p className="text-on-surface-variant font-bold mb-1">Método de Pago</p>
-                  <p className="text-white">{selectedOrderDetails.paymentMethod}</p>
+                  <p className="text-on-surface">{selectedOrderDetails.paymentMethod}</p>
                 </div>
                 <div>
                   <p className="text-on-surface-variant font-bold mb-1">Referencia</p>
