@@ -138,6 +138,7 @@ async function startServer() {
       const { order, customerEmail } = req.body;
       
       const admins = ['EgamingStore1@gmail.com', 'alexparababi23@gmail.com', 'avila2004alexparababi@gmail.com'];
+      const safeCustomerEmail = customerEmail && typeof customerEmail === 'string' ? customerEmail.trim() : 'N/A';
       
       const mailOptions = {
         from: '"Egaming Store" <' + EMAIL_USER + '>',
@@ -152,7 +153,7 @@ Detalles de la orden:
 - Precio: Bs ${order.price.toFixed(2)}
 - Método de Pago: ${order.paymentMethod}
 - Fecha: ${new Date(order.date).toLocaleString()}
-- Email del Cliente: ${customerEmail}
+- Email del Cliente: ${safeCustomerEmail}
 - Player ID: ${order.playerId || 'N/A'}
 `,
         html: `
@@ -179,7 +180,7 @@ Detalles de la orden:
                   </tr>
                   <tr>
                     <td style="padding: 8px 0; color: #a1a1aa; font-size: 14px;">Cliente</td>
-                    <td style="padding: 8px 0; color: #f8fafc; font-size: 14px; text-align: right; font-weight: 600;">${customerEmail}</td>
+                    <td style="padding: 8px 0; color: #f8fafc; font-size: 14px; text-align: right; font-weight: 600;">${safeCustomerEmail}</td>
                   </tr>
                   <tr>
                     <td style="padding: 8px 0; color: #a1a1aa; font-size: 14px;">Juego</td>
@@ -231,6 +232,11 @@ Detalles de la orden:
     try {
       const { order, customerEmail, status } = req.body;
       
+      const safeCustomerEmail = customerEmail && typeof customerEmail === 'string' ? customerEmail.trim() : '';
+      if (!safeCustomerEmail || safeCustomerEmail === 'N/A' || !safeCustomerEmail.includes('@')) {
+        return res.json({ success: true, message: 'No valid email to notify' });
+      }
+
       let subject = '';
       let text = '';
       let html = '';
@@ -348,7 +354,7 @@ Detalles de la orden:
 
       const mailOptions = {
         from: '"Egaming Store" <' + EMAIL_USER + '>',
-        to: customerEmail,
+        to: safeCustomerEmail,
         subject,
         text,
         html,
