@@ -392,7 +392,8 @@ export default function App() {
       await setDoc(doc(db, 'orders', orderId), updatedOrder);
       
       if (status === 'completed' || status === 'rejected') {
-        fetch('/api/notify-order-status', {
+        const apiUrl = import.meta.env.VITE_API_URL || '';
+        fetch(`${apiUrl}/api/notify-order-status`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

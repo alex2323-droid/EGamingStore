@@ -158,7 +158,8 @@ export default function OrderSummary({ game, selectedPackage, selectedPayment, i
       const currentUserEmail = auth.currentUser?.email || 'N/A';
       
       try {
-        await fetch('/api/notify-order', {
+        const apiUrl = import.meta.env.VITE_API_URL || '';
+        await fetch(`${apiUrl}/api/notify-order`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ order: newOrder, customerEmail: currentUserEmail }),
