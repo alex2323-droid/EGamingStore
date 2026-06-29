@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: diamond-pro-dashboard
+    name: egaming-store
     env: node
     buildCommand: npm install && npm run build
     startCommand: npm start
@@ -8,17 +8,11 @@ services:
       - key: NODE_ENV
         value: production
       - key: VITE_API_URL
-        value: "" # Leave blank to use relative paths or set to your Render URL (e.g. https://your-app.onrender.com)
-      # Add the following environment variables in the Render dashboard:
+        value: '' # Se deja en blanco porque el frontend y backend corren en el mismo servidor en Render
+      # Debes agregar las siguientes variables de entorno manualmente en el panel de Render:
+      # - GMAIL_USER (ej. tu_correo@gmail.com)
+      # - GMAIL_APP_PASSWORD (la contraseña de aplicación de Gmail)
+      # Y si usas Firebase Admin:
       # - FIREBASE_PROJECT_ID
       # - FIREBASE_CLIENT_EMAIL
       # - FIREBASE_PRIVATE_KEY
-      # - VITE_FIREBASE_API_KEY
-      # - VITE_FIREBASE_AUTH_DOMAIN
-      # - VITE_FIREBASE_PROJECT_ID
-      # - VITE_FIREBASE_STORAGE_BUCKET
-      # - VITE_FIREBASE_MESSAGING_SENDER_ID
-      # - VITE_FIREBASE_APP_ID
-      # - VITE_FIREBASE_MEASUREMENT_ID
-      # - GMAIL_USER
-      # - GMAIL_APP_PASSWORD
