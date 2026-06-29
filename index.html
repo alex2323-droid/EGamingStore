@@ -1,24 +1,6 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <script>
-      window.addEventListener('error', function(e) {
-        if (e.message === 'Script error.' || e.message === 'Script error' || e.message?.includes('Script error')) {
-          e.stopImmediatePropagation();
-          e.stopPropagation();
-          e.preventDefault();
-        }
-      }, true);
-      window.onerror = function(msg, url, line, col, error) {
-        if (msg === 'Script error.' || msg === 'Script error' || (typeof msg === 'string' && msg.indexOf('Script error') > -1)) {
-          return true;
-        }
-        return false;
-      };
-      window.addEventListener('unhandledrejection', function(e) {
-        // Ignorar rejections silenciosos
-      });
-    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>E Gaming Store</title>
