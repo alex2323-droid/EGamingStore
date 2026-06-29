@@ -159,13 +159,20 @@ export default function OrderSummary({ game, selectedPackage, selectedPayment, i
       
       try {
         const apiUrl = import.meta.env.VITE_API_URL || '';
-        await fetch(`${apiUrl}/api/notify-order`, {
+        const response = await fetch(`${apiUrl}/api/notify-order`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ order: newOrder, customerEmail: currentUserEmail }),
         });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('Email server error:', errorData);
+          alert('Hubo un problema enviando la notificación por correo: ' + (errorData.error || response.statusText));
+        }
       } catch (err) {
         console.warn('Failed to send email notification, but order was saved', err);
+        alert('No se pudo conectar con el servidor para enviar el correo.');
       }
       
       setIsProcessing(false);

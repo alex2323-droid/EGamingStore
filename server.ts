@@ -8,8 +8,8 @@ import cors from 'cors';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-const EMAIL_USER = process.env.GMAIL_USER || 'EgamingStore1@gmail.com';
-const EMAIL_PASS = process.env.GMAIL_APP_PASSWORD || 'hlbhebihoihlewcf';
+const EMAIL_USER = (process.env.GMAIL_USER || 'EgamingStore1@gmail.com').trim();
+const EMAIL_PASS = (process.env.GMAIL_APP_PASSWORD || 'hlbhebihoihlewcf').replace(/\s+/g, '');
 
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
@@ -49,6 +49,26 @@ async function startServer() {
   app.use(express.json({ limit: '200mb' }));
   app.use(express.urlencoded({ limit: '200mb', extended: true }));
 
+  app.get('/api/test-email', async (req, res) => {
+    try {
+      console.log('Testing SMTP connection...');
+      await transporter.verify();
+      console.log('SMTP verified successfully. Sending test email...');
+      
+      const info = await transporter.sendMail({
+        from: '"Egaming Store" <' + EMAIL_USER + '>',
+        to: EMAIL_USER, // Send to self
+        subject: 'Test Email from Render',
+        text: 'If you receive this, SMTP is working correctly on Render.',
+      });
+      
+      res.json({ success: true, message: 'Test email sent successfully', info });
+    } catch (error: any) {
+      console.error('SMTP Test Error:', error);
+      res.status(500).json({ success: false, error: error.message, stack: error.stack });
+    }
+  });
+
   app.post('/api/send-verification', async (req, res) => {
     try {
       const { email } = req.body;
@@ -83,9 +103,9 @@ async function startServer() {
 
       await transporter.sendMail(mailOptions);
       res.json({ success: true, message: 'Verification code sent' });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending verification code:', error);
-      res.status(500).json({ error: 'Failed to send verification code' });
+      res.status(500).json({ error: error.message || 'Failed to send verification code' });
     }
   });
 
@@ -224,9 +244,9 @@ Detalles de la orden:
 
       await transporter.sendMail(mailOptions);
       res.json({ success: true, message: 'Notification sent' });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending email notification:', error);
-      res.status(500).json({ error: 'Failed to send notification' });
+      res.status(500).json({ error: error.message || 'Failed to send notification' });
     }
   });
 
@@ -364,9 +384,9 @@ Detalles de la orden:
 
       await transporter.sendMail(mailOptions);
       res.json({ success: true, message: 'Notification sent' });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending order status email notification:', error);
-      res.status(500).json({ error: 'Failed to send notification' });
+      res.status(500).json({ error: error.message || 'Failed to send notification' });
     }
   });
 
