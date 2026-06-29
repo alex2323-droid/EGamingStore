@@ -56,7 +56,8 @@ export default function App() {
           let changedGames = false;
           loadedGames = loadedGames.map(game => {
             let gameChanged = false;
-            const newPackages = game.packages.map(pkg => {
+            const packagesArray = game.packages || [];
+            const newPackages = packagesArray.map(pkg => {
               const newPkg = { ...pkg };
               if (newPkg.bonus === 10) {
                 delete newPkg.bonus;
@@ -385,7 +386,7 @@ export default function App() {
 
   const handleUpdateOrder = async (orderId: string, status: 'completed' | 'pending' | 'failed' | 'rejected') => {
     try {
-      const orderToUpdate = orders.find(o => o.id === orderId);
+      const orderToUpdate = (orders || []).find(o => o.id === orderId);
       if (!orderToUpdate) return false;
       const updatedOrder = { ...orderToUpdate, status };
       

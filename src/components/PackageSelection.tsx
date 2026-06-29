@@ -15,7 +15,7 @@ export default function PackageSelection({ packages, selectedPackage, onSelect }
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {packages.map((pkg) => {
+        {(packages || []).map((pkg) => {
           const isSelected = selectedPackage?.id === pkg.id;
           
           return (

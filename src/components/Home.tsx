@@ -28,7 +28,7 @@ export default function Home({ games, siteSettings, onSelectGame }: Props) {
   const currentMascotUrl = siteSettings?.mascotHomeUrl || mascotImg;
 
   const filteredGames = useMemo(() => {
-    return games.filter((game) => {
+    return (games || []).filter((game) => {
       const matchesSearch = game.name
         .toLowerCase()
         .includes(searchTerm.toLowerCase());

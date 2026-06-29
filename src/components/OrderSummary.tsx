@@ -76,7 +76,7 @@ export default function OrderSummary({ game, selectedPackage, selectedPayment, i
       return;
     }
     
-    const code = promoCodes.find(c => c.code.toUpperCase() === promoCodeInput.trim().toUpperCase());
+    const code = (promoCodes || []).find(c => c.code.toUpperCase() === promoCodeInput.trim().toUpperCase());
     if (code) {
       if (code.active) {
         setAppliedPromo(code);

@@ -85,7 +85,7 @@ export default function AdminPanel({
         if (game.id === selectedGameId) {
           return {
             ...game,
-            packages: game.packages.map((pkg) =>
+            packages: (game.packages || []).map((pkg) =>
               pkg.id === packageId ? { ...pkg, [field]: value } : pkg,
             ),
           };
@@ -172,7 +172,7 @@ export default function AdminPanel({
         if (game.id === selectedGameId) {
           return {
             ...game,
-            packages: game.packages.filter((pkg) => pkg.id !== packageId),
+            packages: (game.packages || []).filter((pkg) => pkg.id !== packageId),
           };
         }
         return game;
@@ -195,7 +195,7 @@ export default function AdminPanel({
         if (game.id === selectedGame.id) {
           return {
             ...game,
-            packages: [...game.packages, newPackage],
+            packages: [...(game.packages || []), newPackage],
           };
         }
         return game;
@@ -643,7 +643,7 @@ export default function AdminPanel({
                 </div>
 
                 <div className="space-y-4">
-                  {selectedGame.packages.map((pkg, index) => (
+                  {(selectedGame.packages || []).map((pkg, index) => (
                     <div
                       key={pkg.id}
                       className="bg-surface-elevated p-4 rounded-xl border border-glass-border flex flex-col md:flex-row gap-4 items-center"
@@ -1153,14 +1153,14 @@ export default function AdminPanel({
           </div>
 
           <div className="space-y-6">
-            {localSettings.paymentMethods.map((method, index) => (
+            {(localSettings.paymentMethods || []).map((method, index) => (
               <div
                 key={method.id}
                 className="bg-surface-elevated p-6 rounded-xl border border-glass-border relative group"
               >
                 <button
                   onClick={() => {
-                    const newMethods = localSettings.paymentMethods.filter(
+                    const newMethods = (localSettings.paymentMethods || []).filter(
                       (_, i) => i !== index,
                     );
                     handleSettingsChange("paymentMethods", newMethods);
@@ -1300,7 +1300,7 @@ export default function AdminPanel({
                     </td>
                   </tr>
                 ) : (
-                  orders.map((order) => (
+                  (orders || []).map((order) => (
                     <tr
                       key={order.id}
                       className="border-b border-glass-border/50 hover:bg-surface-elevated/50 transition-colors"

@@ -46,7 +46,7 @@ export default function OrdersHistory({ orders }: Props) {
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          {orders.map((order) => {
+          {(orders || []).map((order) => {
             const statusConfig = getStatusConfig(order.status);
             return (
               <div key={order.id} className="glass-panel p-4 rounded-xl border border-glass-border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all hover:bg-surface-container">

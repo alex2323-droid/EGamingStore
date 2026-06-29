@@ -26,7 +26,7 @@ export default function PaymentMethodSelection({ methods, selectedId, onSelect }
       </div>
 
       <div className="flex overflow-x-auto hide-scrollbar gap-4 pb-4">
-        {methods.map((method) => {
+        {(methods || []).map((method) => {
           const isSelected = selectedId === method.id;
           return (
             <div 
@@ -50,10 +50,10 @@ export default function PaymentMethodSelection({ methods, selectedId, onSelect }
         })}
       </div>
 
-      {methods.find(m => m.id === selectedId)?.instructions && (
+      {(methods || []).find(m => m.id === selectedId)?.instructions && (
         <div className="mt-4 p-4 rounded-lg bg-surface-variant text-on-surface-variant text-sm space-y-1">
           <p className="font-semibold text-on-surface mb-2">Instrucciones de Pago:</p>
-          <div className="whitespace-pre-wrap">{methods.find(m => m.id === selectedId)?.instructions}</div>
+          <div className="whitespace-pre-wrap">{(methods || []).find(m => m.id === selectedId)?.instructions}</div>
         </div>
       )}
     </section>

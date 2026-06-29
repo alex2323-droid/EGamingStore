@@ -8,7 +8,7 @@ interface Props {
 }
 
 export default function Profile({ orders }: Props) {
-  const completedOrders = orders.filter(o => o.status === 'completed');
+  const completedOrders = (orders || []).filter(o => o.status === 'completed');
   const totalSpent = completedOrders.reduce((sum, order) => sum + order.price, 0);
 
   const handleLogout = async () => {

@@ -38,7 +38,7 @@ export default function GmailInbox() {
     setError(null);
     try {
       const rawEmails = await getEmails(accessToken);
-      const parsedEmails = rawEmails.map(parseEmailData);
+      const parsedEmails = (rawEmails || []).map(parseEmailData);
       setEmails(parsedEmails);
     } catch (err: any) {
       setError(err.message || 'Failed to load emails');
@@ -59,9 +59,11 @@ export default function GmailInbox() {
       }
     } catch (err: any) {
       if (err.code === 'auth/popup-closed-by-user') {
-        setError('El inicio de sesión fue cancelado.');
+        setError('El inicio de sesión fue cancelado. Si estás en GitHub Pages, asegúrate de haber agregado tu dominio a los "Dominios Autorizados" en Firebase Authentication.');
+      } else if (err.code === 'auth/unauthorized-domain') {
+        setError('Dominio no autorizado. Debes agregar tu dominio de GitHub Pages a los "Dominios Autorizados" en la consola de Firebase.');
       } else {
-        setError(err.message || 'No se pudo iniciar sesión correctamente. Si estás en modo de vista previa, verifica que los permisos estén habilitados.');
+        setError(err.message || 'No se pudo iniciar sesión correctamente.');
       }
     } finally {
       setIsLoggingIn(false);

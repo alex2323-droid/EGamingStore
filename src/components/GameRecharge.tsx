@@ -18,10 +18,10 @@ interface Props {
 export default function GameRecharge({ game, paymentMethods, promoCodes, onBack, onCheckoutSuccess }: Props) {
   const [playerId, setPlayerId] = useState('');
   const [isVerified, setIsVerified] = useState(false);
-  const [selectedPackage, setSelectedPackage] = useState<GamePackage | null>(game.packages[1] || null);
-  const [selectedPaymentId, setSelectedPaymentId] = useState<string>(paymentMethods[0].id);
+  const [selectedPackage, setSelectedPackage] = useState<GamePackage | null>((game.packages && game.packages.length > 1) ? game.packages[1] : (game.packages && game.packages.length > 0 ? game.packages[0] : null));
+  const [selectedPaymentId, setSelectedPaymentId] = useState<string>((paymentMethods && paymentMethods.length > 0) ? paymentMethods[0].id : '');
 
-  const selectedPayment = paymentMethods.find(m => m.id === selectedPaymentId);
+  const selectedPayment = (paymentMethods || []).find(m => m.id === selectedPaymentId);
 
   return (
     <div className="w-full animation-fade-in pb-24 md:pb-8">

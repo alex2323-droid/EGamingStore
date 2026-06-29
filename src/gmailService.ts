@@ -23,7 +23,7 @@ export const getEmails = async (accessToken: string) => {
 };
 
 export const parseEmailData = (email: any) => {
-  const headers = email.payload.headers;
+  const headers = email?.payload?.headers || [];
   const getHeader = (name: string) => {
     const header = headers.find((h: any) => h.name.toLowerCase() === name.toLowerCase());
     return header ? header.value : '';
