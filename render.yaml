@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: diamond-pro-dashboard
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: VITE_API_URL
+        value: "" # Leave blank to use relative paths or set to your Render URL (e.g. https://your-app.onrender.com)
+      # Add the following environment variables in the Render dashboard:
+      # - FIREBASE_PROJECT_ID
+      # - FIREBASE_CLIENT_EMAIL
+      # - FIREBASE_PRIVATE_KEY
+      # - VITE_FIREBASE_API_KEY
+      # - VITE_FIREBASE_AUTH_DOMAIN
+      # - VITE_FIREBASE_PROJECT_ID
+      # - VITE_FIREBASE_STORAGE_BUCKET
+      # - VITE_FIREBASE_MESSAGING_SENDER_ID
+      # - VITE_FIREBASE_APP_ID
+      # - VITE_FIREBASE_MEASUREMENT_ID
+      # - GMAIL_USER
+      # - GMAIL_APP_PASSWORD
