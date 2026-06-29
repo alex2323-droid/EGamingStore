@@ -37,3 +37,42 @@ export const parseEmailData = (email: any) => {
     snippet: email.snippet,
   };
 };
+
+export const sendEmail = async (accessToken: string, to: string, subject: string, htmlBody: string) => {
+  const emailLines = [];
+  emailLines.push(`To: ${to}`);
+  emailLines.push('Content-type: text/html;charset=utf-8');
+  emailLines.push('MIME-Version: 1.0');
+  // Encode subject to handle special characters properly
+  const encodedSubject = `=?utf-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`;
+  emailLines.push(`Subject: ${encodedSubject}`);
+  emailLines.push('');
+  emailLines.push(htmlBody);
+
+  const email = emailLines.join('\r\n').trim();
+  
+  // Base64url encode using unescape and encodeURIComponent for UTF-8 support
+  const base64EncodedEmail = btoa(unescape(encodeURIComponent(email)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+
+  const res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      raw: base64EncodedEmail,
+    }),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(`Failed to send email: ${errorData.error?.message || res.statusText}`);
+  }
+
+  return await res.json();
+};
+

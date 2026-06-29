@@ -1,7 +1,8 @@
 import { Zap, Lock, Gem, CheckCircle, Loader2, Tag, PartyPopper } from 'lucide-react';
 import { useState } from 'react';
 import { PromoCode, Game, GamePackage, PaymentMethod, Order } from '../types';
-import { auth, db } from '../firebase';
+import { auth, db, getAccessToken } from '../firebase';
+import { sendEmail } from '../gmailService';
 import { doc, setDoc, collection, addDoc } from 'firebase/firestore';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'motion/react';
@@ -117,43 +118,63 @@ export default function OrderSummary({ game, selectedPackage, selectedPayment, i
 
       const currentUserEmail = auth.currentUser?.email || 'N/A';
       
-      const apiUrl = import.meta.env.VITE_API_URL || '';
-      // Ejecutamos la llamada al servidor de correo en segundo plano para no bloquear el UI
-      fetch(`${apiUrl}/api/notify-order`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ order: newOrder, customerEmail: currentUserEmail }),
-      }).then(async (response) => {
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error('Email server error:', errorData);
-          try {
-            await addDoc(collection(db, 'email_errors'), {
-              type: 'notify-order',
-              orderId: newOrder.id,
-              customerEmail: currentUserEmail,
-              error: errorData,
-              status: response.status,
-              timestamp: new Date().toISOString()
-            });
-          } catch (logErr) {
-            console.error('Failed to log email error to Firestore', logErr);
-          }
-        }
-      }).catch(async (err) => {
-        console.warn('Failed to send email notification, but order was saved', err);
-        try {
-          await addDoc(collection(db, 'email_errors'), {
-            type: 'notify-order',
-            orderId: newOrder.id,
-            customerEmail: currentUserEmail,
-            error: err instanceof Error ? err.message : String(err),
-            timestamp: new Date().toISOString()
+      try {
+        const accessToken = await getAccessToken();
+        if (accessToken && currentUserEmail !== 'N/A') {
+          console.log('Sending email directly via Gmail API using Admin token');
+          const subject = 'Confirmación de Pedido - Egaming Store';
+          const html = `
+            <div style="font-family: sans-serif; max-w-xl mx-auto p-4">
+              <h2>Gracias por tu pedido #${newOrder.id.slice(-6)}</h2>
+              <p>Hola, hemos recibido tu pedido de <strong>${newOrder.packageName}</strong> para <strong>${newOrder.gameName}</strong>.</p>
+              <p>Estado actual: <strong>PENDIENTE</strong></p>
+              <p>Total pagado: Bs ${newOrder.price.toFixed(2)}</p>
+              <p>Te notificaremos cuando el pedido sea completado.</p>
+            </div>
+          `;
+          await sendEmail(accessToken, currentUserEmail, subject, html);
+        } else {
+          const apiUrl = import.meta.env.VITE_API_URL || '';
+          // Ejecutamos la llamada al servidor de correo en segundo plano para no bloquear el UI
+          fetch(`${apiUrl}/api/notify-order`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order: newOrder, customerEmail: currentUserEmail }),
+          }).then(async (response) => {
+            if (!response.ok) {
+              const errorData = await response.json();
+              console.error('Email server error:', errorData);
+              try {
+                await addDoc(collection(db, 'email_errors'), {
+                  type: 'notify-order',
+                  orderId: newOrder.id,
+                  customerEmail: currentUserEmail,
+                  error: errorData,
+                  status: response.status,
+                  timestamp: new Date().toISOString()
+                });
+              } catch (logErr) {
+                console.error('Failed to log email error to Firestore', logErr);
+              }
+            }
+          }).catch(async (err) => {
+            console.warn('Failed to send email notification, but order was saved', err);
+            try {
+              await addDoc(collection(db, 'email_errors'), {
+                type: 'notify-order',
+                orderId: newOrder.id,
+                customerEmail: currentUserEmail,
+                error: err instanceof Error ? err.message : String(err),
+                timestamp: new Date().toISOString()
+              });
+            } catch (logErr) {
+              console.error('Failed to log email error to Firestore', logErr);
+            }
           });
-        } catch (logErr) {
-          console.error('Failed to log email error to Firestore', logErr);
         }
-      });
+      } catch (gmailErr) {
+        console.error('Failed to send email via Gmail API client-side', gmailErr);
+      }
       
       setIsProcessing(false);
       setShowSuccess(true);
