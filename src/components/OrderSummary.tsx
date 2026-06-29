@@ -2,7 +2,7 @@ import { Zap, Lock, Gem, CheckCircle, Loader2, Tag, PartyPopper } from 'lucide-r
 import { useState } from 'react';
 import { PromoCode, Game, GamePackage, PaymentMethod, Order } from '../types';
 import { auth, db } from '../firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, collection, addDoc } from 'firebase/firestore';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -127,9 +127,32 @@ export default function OrderSummary({ game, selectedPackage, selectedPayment, i
         if (!response.ok) {
           const errorData = await response.json();
           console.error('Email server error:', errorData);
+          try {
+            await addDoc(collection(db, 'email_errors'), {
+              type: 'notify-order',
+              orderId: newOrder.id,
+              customerEmail: currentUserEmail,
+              error: errorData,
+              status: response.status,
+              timestamp: new Date().toISOString()
+            });
+          } catch (logErr) {
+            console.error('Failed to log email error to Firestore', logErr);
+          }
         }
-      }).catch(err => {
+      }).catch(async (err) => {
         console.warn('Failed to send email notification, but order was saved', err);
+        try {
+          await addDoc(collection(db, 'email_errors'), {
+            type: 'notify-order',
+            orderId: newOrder.id,
+            customerEmail: currentUserEmail,
+            error: err instanceof Error ? err.message : String(err),
+            timestamp: new Date().toISOString()
+          });
+        } catch (logErr) {
+          console.error('Failed to log email error to Firestore', logErr);
+        }
       });
       
       setIsProcessing(false);

@@ -21,6 +21,7 @@ import {
   getDoc,
   doc,
   setDoc,
+  addDoc,
   deleteDoc,
   writeBatch,
   query,
@@ -402,7 +403,37 @@ export default function App() {
             customerEmail: updatedOrder.userEmail,
             status
           })
-        }).catch(e => console.error("Failed to trigger email notification", e));
+        }).then(async (response) => {
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Email server error:', errorData);
+            try {
+              await addDoc(collection(db, 'email_errors'), {
+                type: 'notify-order-status',
+                orderId: updatedOrder.id,
+                customerEmail: updatedOrder.userEmail,
+                error: errorData,
+                status: response.status,
+                timestamp: new Date().toISOString()
+              });
+            } catch (logErr) {
+              console.error('Failed to log email error to Firestore', logErr);
+            }
+          }
+        }).catch(async (e) => {
+          console.error("Failed to trigger email notification", e);
+          try {
+            await addDoc(collection(db, 'email_errors'), {
+              type: 'notify-order-status',
+              orderId: updatedOrder.id,
+              customerEmail: updatedOrder.userEmail,
+              error: e instanceof Error ? e.message : String(e),
+              timestamp: new Date().toISOString()
+            });
+          } catch (logErr) {
+            console.error('Failed to log email error to Firestore', logErr);
+          }
+        });
       }
       
       // Removed setOrders as onSnapshot will handle it automatically

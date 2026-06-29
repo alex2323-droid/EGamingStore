@@ -32,5 +32,9 @@ service cloud.firestore {
       allow create: if request.auth != null;
       allow update: if isAdmin();
     }
+    match /email_errors/{errorId} {
+      allow read: if isAdmin();
+      allow create: if request.auth != null;
+    }
   }
 }
