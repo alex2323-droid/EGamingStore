@@ -6,6 +6,10 @@ import nodemailer from 'nodemailer';
 import fs from 'fs/promises';
 import { GoogleGenAI } from '@google/genai';
 import cors from 'cors';
+import dns from 'dns';
+
+// Fix for Render IPv6 reachability issues
+dns.setDefaultResultOrder('ipv4first');
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
