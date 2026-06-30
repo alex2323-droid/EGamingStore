@@ -395,31 +395,6 @@ export default function App() {
       await setDoc(doc(db, 'orders', orderId), updatedOrder);
       
       if (status === 'completed' || status === 'rejected') {
-        try {
-          const accessToken = await getAccessToken();
-          if (accessToken) {
-            console.log('Sending email directly via Gmail API using Admin token');
-            const subject = status === 'completed' ? 'Tu recarga ha sido completada' : 'Tu recarga ha sido rechazada';
-            const html = `
-              <div style="font-family: sans-serif; max-w-xl mx-auto p-4">
-                <h2>Actualización de tu pedido #${updatedOrder.id.slice(-6)}</h2>
-                <p>Hola, tu pedido de <strong>${updatedOrder.packageName}</strong> para <strong>${updatedOrder.gameName}</strong> ha sido <strong>${status === 'completed' ? 'COMPLETADO' : 'RECHAZADO'}</strong>.</p>
-                ${status === 'completed' ? '<p>¡Gracias por tu compra! Disfruta tu recarga.</p>' : '<p>Si tienes dudas, contacta a soporte.</p>'}
-              </div>
-            `;
-            await sendEmail(accessToken, updatedOrder.userEmail, subject, html);
-            return true;
-          }
-        } catch (gmailErr) {
-          console.error('Failed to send email via Gmail API client-side', gmailErr);
-          await addDoc(collection(db, 'email_errors'), {
-            type: 'notify-order-status-gmail-api',
-            orderId: updatedOrder.id,
-            error: gmailErr instanceof Error ? gmailErr.message : String(gmailErr),
-            timestamp: new Date().toISOString()
-          }).catch(console.error);
-        }
-
         const apiUrl = import.meta.env.VITE_API_URL || '';
         fetch(`${apiUrl}/api/notify-order-status`, {
           method: 'POST',

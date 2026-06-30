@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, initializeAuth, inMemoryPersistence, browserLocalPersistence, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, User, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, initializeFirestore } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
@@ -17,9 +17,8 @@ try {
 }
 export const auth = authInstance;
 
-export const db = (firebaseConfig as any).firestoreDatabaseId 
-  ? getFirestore(app, (firebaseConfig as any).firestoreDatabaseId) 
-  : getFirestore(app);
+export const db = initializeFirestore(app, { experimentalForceLongPolling: true }, 'ai-studio-53e6bc08-2f74-4f5e-816d-59b2e44f3829');
+
 
 
 const provider = new GoogleAuthProvider();

@@ -162,22 +162,11 @@ async function startServer() {
       const admins = ['EgamingStore1@gmail.com', 'alexparababi23@gmail.com', 'avila2004alexparababi@gmail.com'];
       const safeCustomerEmail = customerEmail && typeof customerEmail === 'string' ? customerEmail.trim() : 'N/A';
       
-      const mailOptions = {
+      const adminMailOptions = {
         from: '"Egaming Store" <' + EMAIL_USER + '>',
         to: admins.join(', '),
         subject: `Nueva Recarga Exitosa - ${order.gameName}`,
-        text: `Se ha registrado una nueva recarga.
-
-Detalles de la orden:
-- ID de Orden: ${order.id}
-- Juego: ${order.gameName}
-- Paquete: ${order.packageName}
-- Precio: Bs ${order.price.toFixed(2)}
-- Método de Pago: ${order.paymentMethod}
-- Fecha: ${new Date(order.date).toLocaleString()}
-- Email del Cliente: ${safeCustomerEmail}
-- Player ID: ${order.playerId || 'N/A'}
-`,
+        text: `Se ha registrado una nueva recarga.\n\nDetalles de la orden:\n- ID de Orden: ${order.id}\n- Juego: ${order.gameName}\n- Paquete: ${order.packageName}\n- Precio: Bs ${order.price.toFixed(2)}\n- Método de Pago: ${order.paymentMethod}\n- Fecha: ${new Date(order.date).toLocaleString()}\n- Email del Cliente: ${safeCustomerEmail}\n- Player ID: ${order.playerId || 'N/A'}\n`,
         html: `
           <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #09090b; color: #f8fafc; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
             <div style="background-color: #18181b; padding: 24px; text-align: center; border-bottom: 1px solid #27272a;">
@@ -235,14 +224,35 @@ Detalles de la orden:
                 </table>
               </div>
             </div>
-            <div style="background-color: #09090b; padding: 16px; text-align: center; border-top: 1px solid #27272a;">
-              <p style="margin: 0; color: #52525b; font-size: 12px;">© ${new Date().getFullYear()} E Gaming Store.</p>
-            </div>
           </div>
         `
       };
 
-      await transporter.sendMail(mailOptions);
+      await transporter.sendMail(adminMailOptions);
+      
+      if (safeCustomerEmail !== 'N/A' && safeCustomerEmail.includes('@')) {
+        const customerMailOptions = {
+          from: '"Egaming Store" <' + EMAIL_USER + '>',
+          to: safeCustomerEmail,
+          subject: 'Confirmación de Pedido - Egaming Store',
+          text: `Hola, hemos recibido tu pedido de ${order.packageName} para ${order.gameName}.\n\nEstado actual: PENDIENTE\nTotal pagado: Bs ${order.price.toFixed(2)}\n\nTe notificaremos cuando el pedido sea completado.`,
+          html: `
+            <div style="font-family: sans-serif; max-w-xl mx-auto p-4">
+              <h2>Gracias por tu pedido #${order.id.slice(-6)}</h2>
+              <p>Hola, hemos recibido tu pedido de <strong>${order.packageName}</strong> para <strong>${order.gameName}</strong>.</p>
+              <p>Estado actual: <strong>PENDIENTE</strong></p>
+              <p>Total pagado: Bs ${order.price.toFixed(2)}</p>
+              <p>Te notificaremos cuando el pedido sea completado.</p>
+            </div>
+          `
+        };
+        try {
+          await transporter.sendMail(customerMailOptions);
+        } catch (customerErr) {
+          console.error("Failed to send customer confirmation", customerErr);
+        }
+      }
+
       res.json({ success: true, message: 'Notification sent' });
     } catch (error: any) {
       console.error('Error sending email notification:', error);
