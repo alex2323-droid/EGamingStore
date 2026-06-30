@@ -1,4 +1,5 @@
 import express from 'express';
+// Triggering an update for Github sync
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import nodemailer from 'nodemailer';
