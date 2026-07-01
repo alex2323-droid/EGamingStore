@@ -430,6 +430,29 @@ async function startServer() {
     }
   });
 
+  app.post('/api/admin-email', async (req, res) => {
+    try {
+      const { to, subject, html } = req.body;
+      
+      if (!to || !subject || !html) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      const mailOptions = {
+        from: '"Egaming Store" <' + EMAIL_USER + '>',
+        to: to,
+        subject: subject,
+        html: html
+      };
+
+      await transporter.sendMail(mailOptions);
+      res.json({ success: true, message: 'Email sent successfully' });
+    } catch (error: any) {
+      console.error('Error sending admin email:', error);
+      res.status(500).json({ error: error.message || 'Failed to send email' });
+    }
+  });
+
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },

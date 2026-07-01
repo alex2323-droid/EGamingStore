@@ -20,8 +20,10 @@ import {
   CreditCard,
   ShoppingCart,
   Eye,
+  Mail,
 } from "lucide-react";
 import { PAYMENT_METHODS } from "../data";
+import EmailComposer from "./EmailComposer";
 
 interface Props {
   games: Game[];
@@ -48,7 +50,7 @@ export default function AdminPanel({
   onUpdateOrder,
 }: Props) {
   const [activeTab, setActiveTab] = useState<
-    "games" | "promos" | "settings" | "payments" | "orders"
+    "games" | "promos" | "settings" | "payments" | "orders" | "emails"
   >("games");
   const [localGames, setLocalGames] = useState<Game[]>(
     JSON.parse(JSON.stringify(games)),
@@ -411,6 +413,13 @@ export default function AdminPanel({
           >
             <ShoppingCart size={16} className="inline-block mr-2" />
             Órdenes
+          </button>
+          <button
+            onClick={() => setActiveTab("emails")}
+            className={`px-4 py-2 text-sm font-bold rounded-md transition-colors whitespace-nowrap ${activeTab === "emails" ? "bg-primary text-on-surface" : "text-on-surface-variant hover:text-on-surface"}`}
+          >
+            <Mail size={16} className="inline-block mr-2" />
+            Correos
           </button>
         </div>
       </div>
@@ -1396,6 +1405,8 @@ export default function AdminPanel({
             </table>
           </div>
         </div>
+      ) : activeTab === "emails" ? (
+        <EmailComposer />
       ) : null}
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (

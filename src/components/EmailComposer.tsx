@@ -1,0 +1,273 @@
+import React, { useState, useEffect } from 'react';
+import { Mail, Send, Loader2, Save, Trash2 } from 'lucide-react';
+
+interface EmailTemplate {
+  id: string;
+  name: string;
+  subject: string;
+  html: string;
+}
+
+export default function EmailComposer() {
+  const [to, setTo] = useState('');
+  const [subject, setSubject] = useState('');
+  const [html, setHtml] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [status, setStatus] = useState<{type: 'success'|'error', message: string} | null>(null);
+
+  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
+  const [newTemplateName, setNewTemplateName] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    const savedTemplates = localStorage.getItem('emailTemplates');
+    if (savedTemplates) {
+      try {
+        setTemplates(JSON.parse(savedTemplates));
+      } catch (e) {
+        console.error("Failed to parse templates from localStorage");
+      }
+    }
+  }, []);
+
+  const saveTemplates = (newTemplates: EmailTemplate[]) => {
+    setTemplates(newTemplates);
+    localStorage.setItem('emailTemplates', JSON.stringify(newTemplates));
+  };
+
+  const handleSaveTemplate = () => {
+    if (!newTemplateName.trim() || !subject || !html) return;
+    const newTemplate: EmailTemplate = {
+      id: Date.now().toString(),
+      name: newTemplateName.trim(),
+      subject,
+      html
+    };
+    saveTemplates([...templates, newTemplate]);
+    setSelectedTemplateId(newTemplate.id);
+    setNewTemplateName('');
+    setIsSaving(false);
+  };
+
+  const handleDeleteTemplate = (id: string) => {
+    saveTemplates(templates.filter(t => t.id !== id));
+    if (selectedTemplateId === id) {
+      setSelectedTemplateId('');
+      setSubject('');
+      setHtml('');
+    }
+  };
+
+  const handleSelectTemplate = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const id = e.target.value;
+    setSelectedTemplateId(id);
+    if (id) {
+      const template = templates.find(t => t.id === id);
+      if (template) {
+        setSubject(template.subject);
+        setHtml(template.html);
+      }
+    }
+  };
+
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!to || !subject || !html) return;
+    
+    setIsSending(true);
+    setStatus(null);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const response = await fetch(`${apiUrl}/api/admin-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ to, subject, html })
+      });
+      
+      const data = await response.json();
+      if (response.ok) {
+        setStatus({ type: 'success', message: 'Correo enviado correctamente' });
+        setTo('');
+      } else {
+        setStatus({ type: 'error', message: data.error || 'Error al enviar el correo' });
+      }
+    } catch (err: any) {
+      setStatus({ type: 'error', message: err.message || 'Error de conexión' });
+    }
+    setIsSending(false);
+  };
+
+  return (
+    <div className="bg-surface-container border border-glass-border rounded-xl p-6">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-12 h-12 rounded-lg bg-primary/20 text-primary flex items-center justify-center">
+          <Mail size={24} />
+        </div>
+        <div className="flex-1">
+          <h2 className="font-display text-xl md:text-2xl font-bold text-on-surface">Enviar Comunicado</h2>
+          <p className="text-on-surface-variant text-sm font-medium">Envía correos electrónicos directamente a la comunidad.</p>
+        </div>
+        
+        {templates.length > 0 && (
+          <div className="hidden sm:flex items-center gap-2">
+            <select
+              value={selectedTemplateId}
+              onChange={handleSelectTemplate}
+              className="bg-surface border border-glass-border rounded-lg py-2 px-3 text-sm text-on-surface focus:border-primary focus:outline-none"
+            >
+              <option value="">Seleccionar plantilla...</option>
+              {templates.map(t => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </select>
+            {selectedTemplateId && (
+              <button
+                onClick={() => handleDeleteTemplate(selectedTemplateId)}
+                className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                title="Eliminar plantilla"
+              >
+                <Trash2 size={18} />
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Mobile template selector */}
+      {templates.length > 0 && (
+        <div className="sm:hidden flex items-center gap-2 mb-6">
+          <select
+            value={selectedTemplateId}
+            onChange={handleSelectTemplate}
+            className="flex-1 bg-surface border border-glass-border rounded-lg py-2 px-3 text-sm text-on-surface focus:border-primary focus:outline-none"
+          >
+            <option value="">Seleccionar plantilla...</option>
+            {templates.map(t => (
+              <option key={t.id} value={t.id}>{t.name}</option>
+            ))}
+          </select>
+          {selectedTemplateId && (
+            <button
+              onClick={() => handleDeleteTemplate(selectedTemplateId)}
+              className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+              title="Eliminar plantilla"
+            >
+              <Trash2 size={18} />
+            </button>
+          )}
+        </div>
+      )}
+
+      {status && (
+        <div className={`mb-6 p-4 rounded-lg flex items-center gap-2 text-sm font-bold ${
+          status.type === 'success' 
+            ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+            : 'bg-red-500/20 text-red-400 border border-red-500/30'
+        }`}>
+          {status.message}
+        </div>
+      )}
+
+      <form onSubmit={handleSend} className="space-y-4">
+        <div>
+          <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Destinatario (Email)</label>
+          <input
+            type="email"
+            value={to}
+            onChange={e => setTo(e.target.value)}
+            placeholder="ejemplo@correo.com (Para múltiples separar con coma)"
+            required
+            className="w-full bg-surface border border-glass-border rounded-lg py-3 px-4 text-on-surface focus:border-primary focus:outline-none"
+          />
+        </div>
+        
+        <div>
+          <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Asunto</label>
+          <input
+            type="text"
+            value={subject}
+            onChange={e => setSubject(e.target.value)}
+            placeholder="Asunto del correo"
+            required
+            className="w-full bg-surface border border-glass-border rounded-lg py-3 px-4 text-on-surface focus:border-primary focus:outline-none"
+          />
+        </div>
+        
+        <div>
+          <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Contenido (HTML)</label>
+          <textarea
+            value={html}
+            onChange={e => setHtml(e.target.value)}
+            placeholder="<h2>Título</h2><p>Contenido del mensaje...</p>"
+            required
+            rows={8}
+            className="w-full bg-surface border border-glass-border rounded-lg py-3 px-4 text-on-surface focus:border-primary focus:outline-none font-mono text-sm"
+          ></textarea>
+        </div>
+
+        <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+          <button
+            type="submit"
+            disabled={isSending || !to || !subject || !html}
+            className="w-full sm:w-auto btn-primary py-3 px-8 rounded-lg text-white font-bold flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform disabled:opacity-50 disabled:pointer-events-none disabled:transform-none"
+          >
+            {isSending ? (
+              <>
+                <Loader2 size={18} className="animate-spin" />
+                Enviando...
+              </>
+            ) : (
+              <>
+                <Send size={18} />
+                Enviar Correo
+              </>
+            )}
+          </button>
+          
+          <div className="flex w-full sm:w-auto items-center gap-2">
+            {!isSaving ? (
+              <button
+                type="button"
+                onClick={() => setIsSaving(true)}
+                disabled={!subject || !html}
+                className="w-full sm:w-auto py-3 px-6 rounded-lg text-on-surface-variant bg-surface border border-glass-border font-bold flex items-center justify-center gap-2 hover:bg-white/5 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+              >
+                <Save size={18} />
+                Guardar Plantilla
+              </button>
+            ) : (
+              <div className="flex w-full sm:w-auto items-center gap-2">
+                <input
+                  type="text"
+                  value={newTemplateName}
+                  onChange={e => setNewTemplateName(e.target.value)}
+                  placeholder="Nombre de la plantilla"
+                  className="w-full sm:w-48 bg-surface border border-glass-border rounded-lg py-3 px-4 text-sm text-on-surface focus:border-primary focus:outline-none"
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={handleSaveTemplate}
+                  disabled={!newTemplateName.trim()}
+                  className="py-3 px-4 bg-primary text-on-surface rounded-lg font-bold hover:scale-[1.02] transition-transform disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  Guardar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsSaving(false)}
+                  className="py-3 px-4 bg-surface border border-glass-border text-on-surface rounded-lg font-bold hover:bg-white/5 transition-colors"
+                >
+                  Cancelar
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </form>
+    </div>
+  );
+}
