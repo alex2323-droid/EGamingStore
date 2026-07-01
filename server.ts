@@ -24,6 +24,12 @@ const transporter = nodemailer.createTransport({
     user: EMAIL_USER,
     pass: EMAIL_PASS,
   },
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 20000,
+  tls: {
+    rejectUnauthorized: false
+  }
 });
 
 const DB_FILE = path.join(process.cwd(), 'games-db.json');
