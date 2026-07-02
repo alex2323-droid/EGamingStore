@@ -16,7 +16,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const EMAIL_USER = (process.env.GMAIL_USER || 'EgamingStore1@gmail.com').trim();
 const EMAIL_PASS = (process.env.GMAIL_APP_PASSWORD || 'hlbhebihoihlewcf').replace(/\s+/g, '');
 
-const APPS_SCRIPT_URL = process.env.APPS_SCRIPT_URL || 'https://script.google.com/macros/library/d/1aCEPE6LauVDGzERX-5iVXUoASwbe_jTGTdaJv5P5_0-QLK8nAqzPytP_/2';
+const APPS_SCRIPT_URL = process.env.APPS_SCRIPT_URL || 'https://script.google.com/macros/s/AKfycbykm_vWHSjv9xdVz3icHl7UFeSGfkv7swQ624ANRzM_49DZer4n8KZHTmWnG7FV-eyt/exec';
 
 const transporter = {
   verify: async () => {
@@ -44,6 +44,10 @@ const transporter = {
 
       if (text.includes('<title>Google Drive</title>') || text.includes('Sign in') || text.includes('Page Not Found')) {
         throw new Error('El script de Google no tiene permisos públicos. Por favor, asegúrate de implementar el script con acceso para "Cualquier persona" (Anyone).');
+      }
+
+      if (text.includes('Script function not found: doPost')) {
+        throw new Error('El script de Google necesita tener una función "doPost(e)". Por favor, actualiza el código en Apps Script y crea una nueva implementación.');
       }
 
       if (!response.ok) {

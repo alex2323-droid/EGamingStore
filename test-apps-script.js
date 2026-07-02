@@ -1,4 +1,4 @@
-const url = 'https://script.google.com/macros/library/d/1aCEPE6LauVDGzERX-5iVXUoASwbe_jTGTdaJv5P5_0-QLK8nAqzPytP_/2';
+const url = 'https://script.google.com/macros/s/AKfycbykm_vWHSjv9xdVz3icHl7UFeSGfkv7swQ624ANRzM_49DZer4n8KZHTmWnG7FV-eyt/exec';
 async function run() {
   console.log("Testing POST to URL:", url);
   try {
@@ -10,8 +10,7 @@ async function run() {
     });
     console.log("Status:", res.status);
     const text = await res.text();
-    console.log("Body length:", text.length);
-    console.log("Body snippet:", text.substring(0, 200));
+    console.log("Body:", text);
   } catch(e) {
     console.error(e);
   }
