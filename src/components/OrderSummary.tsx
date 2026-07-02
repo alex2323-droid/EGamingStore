@@ -118,7 +118,9 @@ export default function OrderSummary({ game, selectedPackage, selectedPayment, i
 
       const currentUserEmail = auth.currentUser?.email || 'N/A';
       
-      const apiUrl = import.meta.env.VITE_API_URL || '';
+      let apiUrl = import.meta.env.VITE_API_URL || '';
+      if (apiUrl.includes('<AQUI')) apiUrl = '';
+      apiUrl = apiUrl.replace(/\/+$/, '');
       // Ejecutamos la llamada al servidor de correo en segundo plano para no bloquear el UI
       fetch(`${apiUrl}/api/notify-order`, {
         method: 'POST',

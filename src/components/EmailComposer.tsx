@@ -21,13 +21,42 @@ export default function EmailComposer() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
+    const defaultTemplate: EmailTemplate = {
+      id: 'default-1',
+      name: 'Plantilla por Defecto',
+      subject: 'Comunicado Importante - E Gaming Store',
+      html: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #09090b; color: #f8fafc; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #27272a;">
+  <div style="background-color: #18181b; padding: 24px; text-align: center; border-bottom: 1px solid #27272a;">
+    <h1 style="margin: 0; color: #f97316; font-size: 24px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">E Gaming Store</h1>
+  </div>
+  <div style="padding: 32px 24px;">
+    <h2 style="margin: 0 0 16px 0; color: #f8fafc; font-size: 22px;">Hola,</h2>
+    <p style="margin: 0 0 24px 0; color: #a1a1aa; font-size: 16px; line-height: 1.6;">Escribe tu mensaje aquí...</p>
+    
+    <div style="text-align: center; margin-top: 32px;">
+      <a href="https://egamingstore.onrender.com" style="display: inline-block; background-color: #f97316; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">Visita la Tienda</a>
+    </div>
+  </div>
+  <div style="background-color: #18181b; padding: 16px; text-align: center; border-top: 1px solid #27272a;">
+    <p style="margin: 0; color: #52525b; font-size: 12px;">© ${new Date().getFullYear()} E Gaming Store. Todos los derechos reservados.</p>
+  </div>
+</div>`
+    };
+
     const savedTemplates = localStorage.getItem('emailTemplates');
     if (savedTemplates) {
       try {
-        setTemplates(JSON.parse(savedTemplates));
+        const parsed = JSON.parse(savedTemplates);
+        if (parsed.length > 0) {
+          setTemplates(parsed);
+        } else {
+          setTemplates([defaultTemplate]);
+        }
       } catch (e) {
-        console.error("Failed to parse templates from localStorage");
+        setTemplates([defaultTemplate]);
       }
+    } else {
+      setTemplates([defaultTemplate]);
     }
   }, []);
 
@@ -78,7 +107,13 @@ export default function EmailComposer() {
     setIsSending(true);
     setStatus(null);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || '';
+      let apiUrl = import.meta.env.VITE_API_URL || '';
+      if (apiUrl.includes('<AQUI')) {
+        apiUrl = ''; // Fallback to relative path if not configured properly
+      }
+      // Remove trailing slash if present
+      apiUrl = apiUrl.replace(/\/+$/, '');
+
       const response = await fetch(`${apiUrl}/api/admin-email`, {
         method: 'POST',
         headers: {
