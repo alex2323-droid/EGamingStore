@@ -1188,7 +1188,7 @@ export default function AdminPanel({
                       type="text"
                       value={method.name}
                       onChange={(e) => {
-                        const newMethods = [...localSettings.paymentMethods];
+                        const newMethods = [...(localSettings.paymentMethods || [])];
                         newMethods[index].name = e.target.value;
                         handleSettingsChange("paymentMethods", newMethods);
                       }}
@@ -1202,7 +1202,7 @@ export default function AdminPanel({
                     <select
                       value={method.iconType}
                       onChange={(e) => {
-                        const newMethods = [...localSettings.paymentMethods];
+                        const newMethods = [...(localSettings.paymentMethods || [])];
                         newMethods[index].iconType = e.target.value as any;
                         handleSettingsChange("paymentMethods", newMethods);
                       }}
@@ -1213,6 +1213,7 @@ export default function AdminPanel({
                         Banco (Zelle/Transf)
                       </option>
                       <option value="credit_card">Tarjeta de Crédito</option>
+                      <option value="binance">Binance / Crypto</option>
                     </select>
                   </div>
                 </div>
@@ -1223,7 +1224,7 @@ export default function AdminPanel({
                   <textarea
                     value={method.instructions || ""}
                     onChange={(e) => {
-                      const newMethods = [...localSettings.paymentMethods];
+                      const newMethods = [...(localSettings.paymentMethods || [])];
                       newMethods[index].instructions = e.target.value;
                       handleSettingsChange("paymentMethods", newMethods);
                     }}
@@ -1237,7 +1238,7 @@ export default function AdminPanel({
             <button
               onClick={() => {
                 const newMethods = [
-                  ...localSettings.paymentMethods,
+                  ...(localSettings.paymentMethods || []),
                   {
                     id: `pm_${Date.now()}`,
                     name: "Nuevo Método",
@@ -1406,7 +1407,7 @@ export default function AdminPanel({
           </div>
         </div>
       ) : activeTab === "emails" ? (
-        <EmailComposer />
+        <EmailComposer orders={orders || []} />
       ) : null}
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (

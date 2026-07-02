@@ -1,17 +1,38 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, Send, Loader2, Save, Trash2 } from 'lucide-react';
+import { Mail, Send, Loader2, Save, Trash2, Users, User } from 'lucide-react';
+import { Order } from '../types';
 
 interface EmailTemplate {
   id: string;
   name: string;
   subject: string;
-  html: string;
+  wrapperHtml: string;
 }
 
-export default function EmailComposer() {
+interface Props {
+  orders?: Order[];
+}
+
+const DEFAULT_WRAPPER = `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #09090b; color: #f8fafc; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #27272a;">
+  <div style="background-color: #18181b; padding: 24px; text-align: center; border-bottom: 1px solid #27272a;">
+    <h1 style="margin: 0; color: #f97316; font-size: 24px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">E Gaming Store</h1>
+  </div>
+  <div style="padding: 32px 24px;">
+    {{CONTENT}}
+    <div style="text-align: center; margin-top: 32px;">
+      <a href="https://egamingstore.onrender.com" style="display: inline-block; background-color: #f97316; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">Visita la Tienda</a>
+    </div>
+  </div>
+  <div style="background-color: #18181b; padding: 16px; text-align: center; border-top: 1px solid #27272a;">
+    <p style="margin: 0; color: #52525b; font-size: 12px;">© ${new Date().getFullYear()} E Gaming Store. Todos los derechos reservados.</p>
+  </div>
+</div>`;
+
+export default function EmailComposer({ orders = [] }: Props) {
+  const [recipientMode, setRecipientMode] = useState<'single' | 'all'>('single');
   const [to, setTo] = useState('');
   const [subject, setSubject] = useState('');
-  const [html, setHtml] = useState('');
+  const [content, setContent] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [status, setStatus] = useState<{type: 'success'|'error', message: string} | null>(null);
 
@@ -20,30 +41,17 @@ export default function EmailComposer() {
   const [newTemplateName, setNewTemplateName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
+  const uniqueEmails = Array.from(new Set(orders.map(o => o.userEmail).filter(Boolean)));
+
   useEffect(() => {
     const defaultTemplate: EmailTemplate = {
       id: 'default-1',
       name: 'Plantilla por Defecto',
       subject: 'Comunicado Importante - E Gaming Store',
-      html: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #09090b; color: #f8fafc; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #27272a;">
-  <div style="background-color: #18181b; padding: 24px; text-align: center; border-bottom: 1px solid #27272a;">
-    <h1 style="margin: 0; color: #f97316; font-size: 24px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">E Gaming Store</h1>
-  </div>
-  <div style="padding: 32px 24px;">
-    <h2 style="margin: 0 0 16px 0; color: #f8fafc; font-size: 22px;">Hola,</h2>
-    <p style="margin: 0 0 24px 0; color: #a1a1aa; font-size: 16px; line-height: 1.6;">Escribe tu mensaje aquí...</p>
-    
-    <div style="text-align: center; margin-top: 32px;">
-      <a href="https://egamingstore.onrender.com" style="display: inline-block; background-color: #f97316; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">Visita la Tienda</a>
-    </div>
-  </div>
-  <div style="background-color: #18181b; padding: 16px; text-align: center; border-top: 1px solid #27272a;">
-    <p style="margin: 0; color: #52525b; font-size: 12px;">© ${new Date().getFullYear()} E Gaming Store. Todos los derechos reservados.</p>
-  </div>
-</div>`
+      wrapperHtml: DEFAULT_WRAPPER
     };
 
-    const savedTemplates = localStorage.getItem('emailTemplates');
+    const savedTemplates = localStorage.getItem('emailTemplatesV2');
     if (savedTemplates) {
       try {
         const parsed = JSON.parse(savedTemplates);
@@ -57,21 +65,26 @@ export default function EmailComposer() {
       }
     } else {
       setTemplates([defaultTemplate]);
+      setSelectedTemplateId('default-1');
+      setSubject(defaultTemplate.subject);
     }
   }, []);
 
   const saveTemplates = (newTemplates: EmailTemplate[]) => {
     setTemplates(newTemplates);
-    localStorage.setItem('emailTemplates', JSON.stringify(newTemplates));
+    localStorage.setItem('emailTemplatesV2', JSON.stringify(newTemplates));
   };
 
   const handleSaveTemplate = () => {
-    if (!newTemplateName.trim() || !subject || !html) return;
+    if (!newTemplateName.trim() || !subject) return;
+    
+    const activeWrapper = templates.find(t => t.id === selectedTemplateId)?.wrapperHtml || DEFAULT_WRAPPER;
+    
     const newTemplate: EmailTemplate = {
       id: Date.now().toString(),
       name: newTemplateName.trim(),
       subject,
-      html
+      wrapperHtml: activeWrapper
     };
     saveTemplates([...templates, newTemplate]);
     setSelectedTemplateId(newTemplate.id);
@@ -84,7 +97,6 @@ export default function EmailComposer() {
     if (selectedTemplateId === id) {
       setSelectedTemplateId('');
       setSubject('');
-      setHtml('');
     }
   };
 
@@ -95,31 +107,39 @@ export default function EmailComposer() {
       const template = templates.find(t => t.id === id);
       if (template) {
         setSubject(template.subject);
-        setHtml(template.html);
       }
     }
   };
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!to || !subject || !html) return;
-    
+    if (recipientMode === 'single' && !to) return;
+    if (recipientMode === 'all' && uniqueEmails.length === 0) {
+      setStatus({ type: 'error', message: 'No hay usuarios registrados con correos válidos' });
+      return;
+    }
+    if (!subject || !content) return;
+
     setIsSending(true);
     setStatus(null);
+
+    const activeWrapper = templates.find(t => t.id === selectedTemplateId)?.wrapperHtml || DEFAULT_WRAPPER;
+    
+    // Convertir saltos de línea a <br> y envolver en el wrapper
+    const formattedContent = content.split('\n').map(p => `<p style="margin: 0 0 16px 0; color: #a1a1aa; font-size: 16px; line-height: 1.6;">${p}</p>`).join('');
+    const finalHtml = activeWrapper.replace('{{CONTENT}}', formattedContent);
+    
+    const finalRecipients = recipientMode === 'all' ? uniqueEmails.join(',') : to;
+
     try {
       let apiUrl = import.meta.env.VITE_API_URL || '';
-      if (apiUrl.includes('<AQUI')) {
-        apiUrl = ''; // Fallback to relative path if not configured properly
-      }
-      // Remove trailing slash if present
+      if (apiUrl.includes('<AQUI')) apiUrl = '';
       apiUrl = apiUrl.replace(/\/+$/, '');
 
       const response = await fetch(`${apiUrl}/api/admin-email`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ to, subject, html })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: finalRecipients, subject, html: finalHtml })
       });
       
       let data;
@@ -133,7 +153,8 @@ export default function EmailComposer() {
 
       if (response.ok) {
         setStatus({ type: 'success', message: 'Correo enviado correctamente' });
-        setTo('');
+        if (recipientMode === 'single') setTo('');
+        setContent('');
       } else {
         setStatus({ type: 'error', message: data.error || 'Error al enviar el correo' });
       }
@@ -161,12 +182,12 @@ export default function EmailComposer() {
               onChange={handleSelectTemplate}
               className="bg-surface border border-glass-border rounded-lg py-2 px-3 text-sm text-on-surface focus:border-primary focus:outline-none"
             >
-              <option value="">Seleccionar plantilla...</option>
+              <option value="">Plantilla base...</option>
               {templates.map(t => (
                 <option key={t.id} value={t.id}>{t.name}</option>
               ))}
             </select>
-            {selectedTemplateId && (
+            {selectedTemplateId && selectedTemplateId !== 'default-1' && (
               <button
                 onClick={() => handleDeleteTemplate(selectedTemplateId)}
                 className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
@@ -179,31 +200,6 @@ export default function EmailComposer() {
         )}
       </div>
 
-      {/* Mobile template selector */}
-      {templates.length > 0 && (
-        <div className="sm:hidden flex items-center gap-2 mb-6">
-          <select
-            value={selectedTemplateId}
-            onChange={handleSelectTemplate}
-            className="flex-1 bg-surface border border-glass-border rounded-lg py-2 px-3 text-sm text-on-surface focus:border-primary focus:outline-none"
-          >
-            <option value="">Seleccionar plantilla...</option>
-            {templates.map(t => (
-              <option key={t.id} value={t.id}>{t.name}</option>
-            ))}
-          </select>
-          {selectedTemplateId && (
-            <button
-              onClick={() => handleDeleteTemplate(selectedTemplateId)}
-              className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
-              title="Eliminar plantilla"
-            >
-              <Trash2 size={18} />
-            </button>
-          )}
-        </div>
-      )}
-
       {status && (
         <div className={`mb-6 p-4 rounded-lg flex items-center gap-2 text-sm font-bold ${
           status.type === 'success' 
@@ -214,19 +210,60 @@ export default function EmailComposer() {
         </div>
       )}
 
-      <form onSubmit={handleSend} className="space-y-4">
-        <div>
-          <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Destinatario (Email)</label>
-          <input
-            type="email"
-            value={to}
-            onChange={e => setTo(e.target.value)}
-            placeholder="ejemplo@correo.com (Para múltiples separar con coma)"
-            required
-            className="w-full bg-surface border border-glass-border rounded-lg py-3 px-4 text-on-surface focus:border-primary focus:outline-none"
-          />
-        </div>
+      <form onSubmit={handleSend} className="space-y-6">
         
+        {/* Recipient Mode Selection */}
+        <div className="space-y-3">
+          <label className="block text-xs font-bold text-on-surface-variant uppercase">Destinatarios</label>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <label className={`flex-1 flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-colors ${recipientMode === 'single' ? 'bg-primary/10 border-primary text-primary' : 'bg-surface border-glass-border text-on-surface-variant hover:bg-white/5'}`}>
+              <input 
+                type="radio" 
+                name="recipientMode" 
+                value="single" 
+                checked={recipientMode === 'single'} 
+                onChange={() => setRecipientMode('single')}
+                className="hidden" 
+              />
+              <User size={20} />
+              <div className="flex flex-col">
+                <span className="font-bold text-sm">Usuario Específico</span>
+                <span className="text-xs opacity-80">Enviar a un solo correo electrónico</span>
+              </div>
+            </label>
+            
+            <label className={`flex-1 flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-colors ${recipientMode === 'all' ? 'bg-primary/10 border-primary text-primary' : 'bg-surface border-glass-border text-on-surface-variant hover:bg-white/5'}`}>
+              <input 
+                type="radio" 
+                name="recipientMode" 
+                value="all" 
+                checked={recipientMode === 'all'} 
+                onChange={() => setRecipientMode('all')}
+                className="hidden" 
+              />
+              <Users size={20} />
+              <div className="flex flex-col">
+                <span className="font-bold text-sm">Todos los Usuarios</span>
+                <span className="text-xs opacity-80">Enviar a {uniqueEmails.length} usuario(s) registrado(s)</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        {recipientMode === 'single' && (
+          <div>
+            <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Correo Electrónico</label>
+            <input
+              type="email"
+              value={to}
+              onChange={e => setTo(e.target.value)}
+              placeholder="ejemplo@correo.com (Para múltiples separar con coma)"
+              required={recipientMode === 'single'}
+              className="w-full bg-surface border border-glass-border rounded-lg py-3 px-4 text-on-surface focus:border-primary focus:outline-none"
+            />
+          </div>
+        )}
+
         <div>
           <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Asunto</label>
           <input
@@ -238,23 +275,23 @@ export default function EmailComposer() {
             className="w-full bg-surface border border-glass-border rounded-lg py-3 px-4 text-on-surface focus:border-primary focus:outline-none"
           />
         </div>
-        
+
         <div>
-          <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Contenido (HTML)</label>
+          <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">Contenido del Mensaje</label>
           <textarea
-            value={html}
-            onChange={e => setHtml(e.target.value)}
-            placeholder="<h2>Título</h2><p>Contenido del mensaje...</p>"
+            value={content}
+            onChange={e => setContent(e.target.value)}
+            placeholder="Escribe el contenido de tu mensaje aquí. La plantilla visual se aplicará automáticamente al enviarlo..."
             required
             rows={8}
-            className="w-full bg-surface border border-glass-border rounded-lg py-3 px-4 text-on-surface focus:border-primary focus:outline-none font-mono text-sm"
+            className="w-full bg-surface border border-glass-border rounded-lg py-3 px-4 text-on-surface focus:border-primary focus:outline-none text-sm resize-y"
           ></textarea>
         </div>
 
         <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
           <button
             type="submit"
-            disabled={isSending || !to || !subject || !html}
+            disabled={isSending || (recipientMode === 'single' && !to) || !subject || !content}
             className="w-full sm:w-auto btn-primary py-3 px-8 rounded-lg text-white font-bold flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform disabled:opacity-50 disabled:pointer-events-none disabled:transform-none"
           >
             {isSending ? (
@@ -275,7 +312,7 @@ export default function EmailComposer() {
               <button
                 type="button"
                 onClick={() => setIsSaving(true)}
-                disabled={!subject || !html}
+                disabled={!subject}
                 className="w-full sm:w-auto py-3 px-6 rounded-lg text-on-surface-variant bg-surface border border-glass-border font-bold flex items-center justify-center gap-2 hover:bg-white/5 transition-colors disabled:opacity-50 disabled:pointer-events-none"
               >
                 <Save size={18} />

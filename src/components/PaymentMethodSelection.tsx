@@ -1,4 +1,4 @@
-import { Banknote, CreditCard, Landmark, CheckCircle } from 'lucide-react';
+import { Banknote, CreditCard, Landmark, CheckCircle, Bitcoin } from 'lucide-react';
 import { PaymentMethod } from '../types';
 
 interface Props {
@@ -14,6 +14,7 @@ export default function PaymentMethodSelection({ methods, selectedId, onSelect }
       case 'payments': return <Banknote className={className} />;
       case 'account_balance': return <Landmark className={className} />;
       case 'credit_card': return <CreditCard className={className} />;
+      case 'binance': return <Bitcoin className={className} />;
       default: return <CreditCard className={className} />;
     }
   };

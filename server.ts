@@ -54,6 +54,15 @@ const transporter = {
         throw new Error(`Apps Script Error (${response.status}): ${text.substring(0, 100)}`);
       }
 
+      try {
+        const json = JSON.parse(text);
+        if (json.error) {
+          throw new Error(`Error en Apps Script: ${json.error}`);
+        }
+      } catch (e) {
+        // Ignorar si no es JSON
+      }
+
       console.log("Correo enviado exitosamente vía Apps Script");
       return { messageId: 'apps-script-' + Date.now() };
     } catch (error) {
@@ -83,7 +92,7 @@ async function saveGamesDb(games: any) {
 
 async function startServer() {
   const app = express();
-  const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+  const PORT = 3000;
 
   const verificationCodes = new Map<string, { code: string, expires: number }>();
 
@@ -475,15 +484,27 @@ async function startServer() {
         return res.status(400).json({ error: 'Missing required fields' });
       }
 
-      const mailOptions = {
-        from: '"Egaming Store" <' + EMAIL_USER + '>',
-        to: to,
-        subject: subject,
-        html: html
-      };
+      const recipients = to.split(',').map((email: string) => email.trim()).filter(Boolean);
+      
+      if (recipients.length === 0) {
+        return res.status(400).json({ error: 'No valid recipients' });
+      }
 
-      await transporter.sendMail(mailOptions);
-      res.json({ success: true, message: 'Email sent successfully' });
+      for (const recipient of recipients) {
+        const mailOptions = {
+          from: '"Egaming Store" <' + EMAIL_USER + '>',
+          to: recipient,
+          subject: subject,
+          html: html
+        };
+        await transporter.sendMail(mailOptions);
+        // Pequeño delay opcional si son muchos para no saturar Apps Script
+        if (recipients.length > 1) {
+          await new Promise(r => setTimeout(r, 200));
+        }
+      }
+
+      res.json({ success: true, message: 'Email(s) sent successfully' });
     } catch (error: any) {
       console.error('Error sending admin email:', error);
       res.status(500).json({ error: error.message || 'Failed to send email' });

@@ -17,3 +17,8 @@ function doPost(e) {
       .setMimeType(ContentService.MimeType.JSON);
   }
 }
+
+function doGet(e) {
+  return ContentService.createTextOutput("El Web App está funcionando correctamente. Usa peticiones POST para enviar correos.")
+    .setMimeType(ContentService.MimeType.TEXT);
+}

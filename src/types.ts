@@ -19,7 +19,7 @@ export interface PromoCode {
 export interface PaymentMethod {
   id: string;
   name: string;
-  iconType: 'payments' | 'account_balance' | 'credit_card';
+  iconType: 'payments' | 'account_balance' | 'credit_card' | 'binance';
   instructions?: string;
 }
 
