@@ -16,21 +16,48 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const EMAIL_USER = (process.env.GMAIL_USER || 'EgamingStore1@gmail.com').trim();
 const EMAIL_PASS = (process.env.GMAIL_APP_PASSWORD || 'hlbhebihoihlewcf').replace(/\s+/g, '');
 
-  const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // upgrade later with STARTTLS
-    auth: {
-      user: EMAIL_USER,
-      pass: EMAIL_PASS,
-    },
-    connectionTimeout: 5000,
-    greetingTimeout: 5000,
-    socketTimeout: 5000,
-    tls: {
-      rejectUnauthorized: false
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby1DFSuIoAeSEWIIjluyUfVYQOL4u9I-yY2hrTeKrN65BTOHV3fTzmXdkSd8JtE5wY/exec';
+
+const transporter = {
+  verify: async () => {
+    console.log("Verificando conexión con Google Apps Script...");
+    return true;
+  },
+  sendMail: async (mailOptions: any) => {
+    console.log(`Enviando correo a ${mailOptions.to} vía Google Apps Script...`);
+    try {
+      const response = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: mailOptions.to,
+          subject: mailOptions.subject,
+          html: mailOptions.html,
+          from: mailOptions.from || EMAIL_USER
+        }),
+        redirect: 'follow'
+      });
+
+      const text = await response.text();
+
+      if (text.includes('<title>Google Drive</title>') || text.includes('Sign in') || text.includes('Page Not Found')) {
+        throw new Error('El script de Google no tiene permisos públicos. Por favor, asegúrate de implementar el script con acceso para "Cualquier persona" (Anyone).');
+      }
+
+      if (!response.ok) {
+        throw new Error(`Apps Script Error (${response.status}): ${text.substring(0, 100)}`);
+      }
+
+      console.log("Correo enviado exitosamente vía Apps Script");
+      return { messageId: 'apps-script-' + Date.now() };
+    } catch (error) {
+      console.error("Error al enviar correo por Apps Script:", error);
+      throw error;
     }
-  });
+  }
+};
 
 const DB_FILE = path.join(process.cwd(), 'games-db.json');
 
@@ -455,13 +482,7 @@ async function startServer() {
       res.json({ success: true, message: 'Email sent successfully' });
     } catch (error: any) {
       console.error('Error sending admin email:', error);
-      let errorMessage = error.message || 'Failed to send email';
-      
-      if (error.code === 'ETIMEDOUT' || error.message.includes('timeout')) {
-        errorMessage = 'Error: Render bloquea el envío de correos (puertos 587/465) en su plan gratuito. Para enviar correos desde Render, necesitas un plan pago o usar una API externa como Resend o SendGrid.';
-      }
-      
-      res.status(500).json({ error: errorMessage });
+      res.status(500).json({ error: error.message || 'Failed to send email' });
     }
   });
 
