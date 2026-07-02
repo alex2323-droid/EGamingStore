@@ -16,7 +16,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const EMAIL_USER = (process.env.GMAIL_USER || 'EgamingStore1@gmail.com').trim();
 const EMAIL_PASS = (process.env.GMAIL_APP_PASSWORD || 'hlbhebihoihlewcf').replace(/\s+/g, '');
 
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby1DFSuIoAeSEWIIjluyUfVYQOL4u9I-yY2hrTeKrN65BTOHV3fTzmXdkSd8JtE5wY/exec';
+const APPS_SCRIPT_URL = process.env.APPS_SCRIPT_URL || 'https://script.google.com/macros/library/d/1aCEPE6LauVDGzERX-5iVXUoASwbe_jTGTdaJv5P5_0-QLK8nAqzPytP_/2';
 
 const transporter = {
   verify: async () => {
