@@ -16,21 +16,21 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const EMAIL_USER = (process.env.GMAIL_USER || 'EgamingStore1@gmail.com').trim();
 const EMAIL_PASS = (process.env.GMAIL_APP_PASSWORD || 'hlbhebihoihlewcf').replace(/\s+/g, '');
 
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, // upgrade later with STARTTLS
-  auth: {
-    user: EMAIL_USER,
-    pass: EMAIL_PASS,
-  },
-  connectionTimeout: 20000,
-  greetingTimeout: 20000,
-  socketTimeout: 30000,
-  tls: {
-    rejectUnauthorized: false
-  }
-});
+  const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false, // upgrade later with STARTTLS
+    auth: {
+      user: EMAIL_USER,
+      pass: EMAIL_PASS,
+    },
+    connectionTimeout: 5000,
+    greetingTimeout: 5000,
+    socketTimeout: 5000,
+    tls: {
+      rejectUnauthorized: false
+    }
+  });
 
 const DB_FILE = path.join(process.cwd(), 'games-db.json');
 
@@ -455,7 +455,13 @@ async function startServer() {
       res.json({ success: true, message: 'Email sent successfully' });
     } catch (error: any) {
       console.error('Error sending admin email:', error);
-      res.status(500).json({ error: error.message || 'Failed to send email' });
+      let errorMessage = error.message || 'Failed to send email';
+      
+      if (error.code === 'ETIMEDOUT' || error.message.includes('timeout')) {
+        errorMessage = 'Error: Render bloquea el envío de correos (puertos 587/465) en su plan gratuito. Para enviar correos desde Render, necesitas un plan pago o usar una API externa como Resend o SendGrid.';
+      }
+      
+      res.status(500).json({ error: errorMessage });
     }
   });
 
