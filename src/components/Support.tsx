@@ -67,9 +67,9 @@ export default function Support({ siteSettings }: Props) {
               Respuestas rápidas 24/7 a través de nuestro canal de WhatsApp para
               problemas urgentes y verificación de pagos.
             </p>
-            <button className="bg-[#25D366] text-white font-bold py-2.5 px-6 rounded-lg w-full hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
-              <MessageCircle size={18} /> Chat en Vivo
-            </button>
+            <a href="https://wa.me/584124780457" target="_blank" rel="noopener noreferrer" className="bg-[#25D366] text-white font-bold py-2.5 px-6 rounded-lg w-full hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+              <MessageCircle size={18} /> +58 412-4780457
+            </a>
           </div>
         </div>
 
@@ -83,7 +83,7 @@ export default function Support({ siteSettings }: Props) {
                 Soporte por Correo
               </h4>
               <p className="text-sm font-medium text-on-surface-variant mt-1">
-                soporte@egamingstore.com
+                egamingstore1@gmail.com
               </p>
             </div>
           </div>
