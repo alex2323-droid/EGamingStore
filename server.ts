@@ -639,7 +639,7 @@ async function startServer() {
 
       if (!validateRes.ok) {
         const errorText = await validateRes.text();
-        console.error("HankGames Validate Failed:", errorText);
+        // console.error("HankGames Validate Failed:", errorText);
         
         // Return a mock success response so the UI doesn't block the checkout flow.
         // We do this because the specific validate endpoint or productId might be incorrect/missing.
