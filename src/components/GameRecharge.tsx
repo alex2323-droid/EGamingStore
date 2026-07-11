@@ -44,6 +44,8 @@ export default function GameRecharge({ game, paymentMethods, promoCodes, onBack,
             setPlayerId={setPlayerId}
             isVerified={isVerified}
             setIsVerified={setIsVerified}
+            selectedPackage={selectedPackage}
+            game={game}
           />
           
           <PackageSelection 

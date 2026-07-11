@@ -435,6 +435,76 @@ async function startServer() {
         return res.json({ success: true, message: 'Status does not require notification' });
       }
 
+      // Automatically purchase from HankGames if order is completed
+      let hankGamesResult = null;
+      if (status === 'completed' && process.env.HANKGAMES_API_USER && process.env.HANKGAMES_API_PASS) {
+        try {
+          console.log(`Attempting automated purchase for order ${order.id} with HankGames...`);
+          // 1. Get Token
+          const tokenRes = await fetch('https://api.hankgames.com/v1/reseller/api/auth/token', {
+            method: 'POST',
+            headers: {
+              'x-client-id': process.env.HANKGAMES_API_USER,
+              'x-client-secret': process.env.HANKGAMES_API_PASS,
+              'accept': 'application/json'
+            }
+          });
+          
+          if (tokenRes.ok) {
+            const tokenData = await tokenRes.json();
+            const token = tokenData.token || tokenData.data?.token || tokenData.access_token;
+            
+            // 2. Deliver product (Create Transaction)
+            // Parse player ID and zone ID if provided in format like 123456(1234)
+            let userId = order.playerId || '';
+            let zoneId = '';
+            
+            // Check if player ID has parentheses or spaces separating zone
+            const zoneMatch = userId.match(/^(.*?)[(\s]+(\d+)[)\s]*$/);
+            if (zoneMatch) {
+              userId = zoneMatch[1].trim();
+              zoneId = zoneMatch[2].trim();
+            }
+
+            const deliverPayload = {
+              externalOrderId: order.id,
+              data: {
+                productId: order.packageId || '',
+                quantity: "1",
+                userId: userId,
+                ...(zoneId ? { zoneId: zoneId } : {})
+              }
+            };
+            
+            console.log("Sending HankGames Transaction Payload:", JSON.stringify(deliverPayload));
+
+            const deliverRes = await fetch('https://api.hankgames.com/v1/reseller/api/deliver-product', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'accept': 'application/json',
+                'content-type': 'application/json'
+              },
+              body: JSON.stringify(deliverPayload)
+            });
+            
+            if (deliverRes.ok) {
+              const deliverData = await deliverRes.json();
+              console.log("HankGames transaction success:", deliverData);
+              hankGamesResult = deliverData;
+            } else {
+               const errText = await deliverRes.text();
+               console.error("HankGames transaction failed:", errText);
+               hankGamesResult = { error: errText };
+            }
+          } else {
+            console.error("HankGames Auth Failed:", await tokenRes.text());
+          }
+        } catch (hgError) {
+          console.error("HankGames Automation Error:", hgError);
+        }
+      }
+
       const mailOptions = {
         from: '"Egaming Store" <' + EMAIL_USER + '>',
         to: safeCustomerEmail,
@@ -508,6 +578,76 @@ async function startServer() {
     } catch (error: any) {
       console.error('Error sending admin email:', error);
       res.status(500).json({ error: error.message || 'Failed to send email' });
+    }
+  });
+
+  app.post('/api/validate-player', async (req, res) => {
+    try {
+      const { packageId, playerId } = req.body;
+      if (!packageId || !playerId) {
+        return res.status(400).json({ error: 'Missing packageId or playerId' });
+      }
+
+      if (!process.env.HANKGAMES_API_USER || !process.env.HANKGAMES_API_PASS) {
+        return res.status(500).json({ error: 'HankGames API credentials not configured' });
+      }
+
+      // 1. Get Token
+      const tokenRes = await fetch('https://api.hankgames.com/v1/reseller/api/auth/token', {
+        method: 'POST',
+        headers: {
+          'x-client-id': process.env.HANKGAMES_API_USER,
+          'x-client-secret': process.env.HANKGAMES_API_PASS,
+          'accept': 'application/json'
+        }
+      });
+      
+      if (!tokenRes.ok) {
+        const errorText = await tokenRes.text();
+        console.error("HankGames Auth Failed:", errorText);
+        return res.status(401).json({ error: 'HankGames Authentication Failed' });
+      }
+
+      const tokenData = await tokenRes.json();
+      const token = tokenData.token || tokenData.data?.token || tokenData.access_token;
+
+      // Parse player ID and zone ID if provided in format like 123456(1234)
+      let userId = playerId || '';
+      let zoneId = '';
+      const zoneMatch = userId.match(/^(.*?)[(\s]+(\d+)[)\s]*$/);
+      if (zoneMatch) {
+        userId = zoneMatch[1].trim();
+        zoneId = zoneMatch[2].trim();
+      }
+
+      const validatePayload = {
+        productId: packageId,
+        userId: userId,
+        ...(zoneId ? { zoneId: zoneId } : {})
+      };
+
+      // 2. Validate Player
+      const validateRes = await fetch('https://api.hankgames.com/v1/reseller/api/product/validate', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'accept': 'application/json',
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify(validatePayload)
+      });
+
+      if (!validateRes.ok) {
+        const errorText = await validateRes.text();
+        console.error("HankGames Validate Failed:", errorText);
+        return res.status(400).json({ error: 'Player validation failed', details: errorText });
+      }
+
+      const validateData = await validateRes.json();
+      res.json(validateData);
+    } catch (error: any) {
+      console.error('Error validating player:', error);
+      res.status(500).json({ error: error.message || 'Failed to validate player' });
     }
   });
 

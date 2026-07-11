@@ -101,7 +101,9 @@ export default function OrderSummary({ game, selectedPackage, selectedPayment, i
     const newOrder: Order = {
       id: `ORD-${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`,
       date: new Date().toISOString(),
+      gameId: game.id,
       gameName: game.name,
+      packageId: selectedPackage.id,
       packageName: `${selectedPackage.amount} ${selectedPackage.currency}`,
       price: finalPrice,
       status: 'pending',

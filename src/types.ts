@@ -37,7 +37,9 @@ export interface Game {
 export interface Order {
   id: string;
   date: string;
+  gameId?: string;
   gameName: string;
+  packageId?: string;
   packageName: string;
   price: number;
   status: 'completed' | 'pending' | 'failed' | 'rejected';
