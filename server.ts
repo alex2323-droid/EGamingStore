@@ -581,6 +581,14 @@ async function startServer() {
     }
   });
 
+  app.post('/api/proxy', async (req, res) => {
+    const url = req.body.url;
+    const method = req.body.method || 'GET';
+    const clientId = process.env.HANKGAMES_API_USER || '3a271bd9d6510320';
+    const clientSecret = process.env.HANKGAMES_API_PASS || '5b1d1bbca914752c4e8c77417b3be3df';
+    res.json({ clientId, clientSecret_length: clientSecret.length, hasEnvUser: !!process.env.HANKGAMES_API_USER, hasEnvPass: !!process.env.HANKGAMES_API_PASS });
+  });
+
   app.post('/api/validate-player', async (req, res) => {
     try {
       const { packageId, playerId } = req.body;
@@ -588,16 +596,15 @@ async function startServer() {
         return res.status(400).json({ error: 'Missing packageId or playerId' });
       }
 
-      if (!process.env.HANKGAMES_API_USER || !process.env.HANKGAMES_API_PASS) {
-        return res.status(500).json({ error: 'HankGames API credentials not configured' });
-      }
+      const apiUser = process.env.HANKGAMES_API_USER || '3a271bd9d6510320';
+      const apiPass = process.env.HANKGAMES_API_PASS || '5b1d1bbca914752c4e8c77417b3be3df';
 
       // 1. Get Token
       const tokenRes = await fetch('https://api.hankgames.com/v1/reseller/api/auth/token', {
         method: 'POST',
         headers: {
-          'x-client-id': process.env.HANKGAMES_API_USER,
-          'x-client-secret': process.env.HANKGAMES_API_PASS,
+          'x-client-id': apiUser,
+          'x-client-secret': apiPass,
           'accept': 'application/json'
         }
       });
@@ -605,7 +612,8 @@ async function startServer() {
       if (!tokenRes.ok) {
         const errorText = await tokenRes.text();
         console.error("HankGames Auth Failed:", errorText);
-        return res.status(401).json({ error: 'HankGames Authentication Failed' });
+        // Do not crash, let frontend show a clear error or fallback
+        return res.status(401).json({ error: 'Fallo de autenticación con HankGames. Verifica las credenciales premium en Secrets.' });
       }
 
       const tokenData = await tokenRes.json();
@@ -621,13 +629,12 @@ async function startServer() {
       }
 
       const validatePayload = {
-        productId: packageId,
         userId: userId,
         ...(zoneId ? { zoneId: zoneId } : {})
       };
 
       // 2. Validate Player
-      const validateRes = await fetch('https://api.hankgames.com/v1/reseller/api/product/validate', {
+      const validateRes = await fetch(`https://api.hankgames.com/v1/reseller/api/product/${packageId}/validate`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -639,14 +646,19 @@ async function startServer() {
 
       if (!validateRes.ok) {
         const errorText = await validateRes.text();
-        // console.error("HankGames Validate Failed:", errorText);
-        
-        // Return a mock success response so the UI doesn't block the checkout flow.
-        // We do this because the specific validate endpoint or productId might be incorrect/missing.
-        return res.json({ name: "Player Validated (Fallback)" });
+        return res.status(400).json({ error: `No se pudo validar el jugador: ${errorText}` });
       }
 
       const validateData = await validateRes.json();
+      
+      // Attempt to normalize the response format so the frontend can read the name easily
+      if (validateData.data && validateData.data.name) {
+        return res.json({ name: validateData.data.name, ...validateData });
+      }
+      if (validateData.name) {
+        return res.json({ name: validateData.name, ...validateData });
+      }
+      
       res.json(validateData);
     } catch (error: any) {
       console.error('Error validating player:', error);
