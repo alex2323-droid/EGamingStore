@@ -588,6 +588,15 @@ async function startServer() {
     const clientSecret = process.env.HANKGAMES_API_PASS || '5b1d1bbca914752c4e8c77417b3be3df';
     res.json({ clientId, clientSecret_length: clientSecret.length, hasEnvUser: !!process.env.HANKGAMES_API_USER, hasEnvPass: !!process.env.HANKGAMES_API_PASS });
   });
+app.get('/api/ip', async (req, res) => {
+    try {
+      const response = await fetch('https://ifconfig.me');
+      const ip = await response.text();
+      res.json({ ip: ip.trim() });
+    } catch (e) {
+      res.status(500).json({ error: 'failed' });
+    }
+  });
 
   app.post('/api/validate-player', async (req, res) => {
     try {
