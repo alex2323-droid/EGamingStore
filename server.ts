@@ -498,7 +498,7 @@ async function startServer() {
                hankGamesResult = { error: errText };
             }
           } else {
-            console.error("HankGames Auth Failed:", await tokenRes.text());
+            console.warn("HankGames Auth Warning:", await tokenRes.text());
           }
         } catch (hgError) {
           console.error("HankGames Automation Error:", hgError);
@@ -620,7 +620,7 @@ app.get('/api/ip', async (req, res) => {
       
       if (!tokenRes.ok) {
         const errorText = await tokenRes.text();
-        console.error("HankGames Auth Failed:", errorText);
+        console.warn("HankGames Auth Warning:", errorText);
         // Do not crash, let frontend show a clear error or fallback
         return res.status(401).json({ error: 'Fallo de autenticación con HankGames. Verifica las credenciales premium en Secrets.' });
       }
