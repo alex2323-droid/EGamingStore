@@ -129,6 +129,19 @@ export default function OrderSummary({ game, selectedPackage, selectedPayment, i
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ order: newOrder, customerEmail: currentUserEmail }),
       }).then(async (response) => {
+        if (response.ok) {
+          const resData = await response.json();
+          if (resData.hankGamesResult) {
+            // Update order in Firestore with the API result
+            try {
+              await updateDoc(doc(db, 'orders', newOrder.id), {
+                hankGamesResult: resData.hankGamesResult
+              });
+            } catch (e) {
+              console.error('Failed to update order with hankGamesResult', e);
+            }
+          }
+        }
         if (!response.ok) {
           const errorData = await response.json();
           console.error('Email server error:', errorData);

@@ -21,8 +21,7 @@ import {
   getDocs,
   getDoc,
   doc,
-  setDoc,
-  addDoc,
+  setDoc, updateDoc, addDoc,
   deleteDoc,
   writeBatch,
   query,
@@ -407,6 +406,19 @@ export default function App() {
             status
           })
         }).then(async (response) => {
+          if (response.ok) {
+            const resData = await response.json();
+            if (resData.hankGamesResult) {
+              // Update order in Firestore with the API result
+              try {
+                await updateDoc(doc(db, 'orders', updatedOrder.id), {
+                  hankGamesResult: resData.hankGamesResult
+                });
+              } catch (e) {
+                console.error('Failed to update order with hankGamesResult', e);
+              }
+            }
+          }
           if (!response.ok) {
             const errorData = await response.json();
             console.error('Email server error:', errorData);

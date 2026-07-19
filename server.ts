@@ -270,7 +270,7 @@ async function startServer() {
                hankGamesResult = { error: errText };
             }
           } else {
-            console.warn("HankGames Auth Warning (New Order):", await tokenRes.text());
+            const errText = await tokenRes.text(); console.warn("HankGames Auth Warning (New Order):", errText); hankGamesResult = { error: "Auth failed: " + errText };
           }
         } catch (hgError) {
           console.error("HankGames Automation Error (New Order):", hgError);
@@ -369,7 +369,7 @@ async function startServer() {
         }
       }
 
-      res.json({ success: true, message: 'Notification sent' });
+      res.json({ success: true, message: 'Notification sent', hankGamesResult });
     } catch (error: any) {
       console.error('Error sending email notification:', error);
       res.status(500).json({ error: error.message || 'Failed to send notification' });
@@ -563,7 +563,7 @@ async function startServer() {
                hankGamesResult = { error: errText };
             }
           } else {
-            console.warn("HankGames Auth Warning:", await tokenRes.text());
+            const errText = await tokenRes.text(); console.warn("HankGames Auth Warning:", errText); hankGamesResult = { error: "Auth failed: " + errText };
           }
         } catch (hgError) {
           console.error("HankGames Automation Error:", hgError);
