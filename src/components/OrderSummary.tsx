@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { PromoCode, Game, GamePackage, PaymentMethod, Order } from '../types';
 import { auth, db, getAccessToken } from '../firebase';
 import { sendEmail } from '../gmailService';
-import { doc, setDoc, collection, addDoc } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, collection, addDoc } from 'firebase/firestore';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'motion/react';
 

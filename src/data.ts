@@ -2,23 +2,23 @@ import { Game, GamePackage, PaymentMethod } from './types';
 
 const defaultPackages: GamePackage[] = [
   {
-    id: 'pkg_100',
-    amount: 100,
-    currency: 'Gold',
+    id: '6a58ee9a45127738a897b7de', // 110 Diamonds HankGames ID
+    amount: 110,
+    currency: 'Diamonds',
     price: 0.99,
     iconUrl: 'https://cdn-icons-png.flaticon.com/512/2850/2850785.png',
   },
   {
-    id: 'pkg_300',
-    amount: 300,
-    currency: 'Gold',
+    id: '6a58ee9a45127738a897b7df', // 341 Diamonds HankGames ID
+    amount: 341,
+    currency: 'Diamonds',
     price: 2.99,
     iconUrl: 'https://cdn-icons-png.flaticon.com/512/2850/2850785.png',
   },
   {
-    id: 'pkg_500',
-    amount: 500,
-    currency: 'Gold',
+    id: '6a58ee9a45127738a897b7e0', // 572 Diamonds HankGames ID
+    amount: 572,
+    currency: 'Diamonds',
     price: 4.99,
     iconUrl: 'https://cdn-icons-png.flaticon.com/512/2850/2850785.png',
   },
