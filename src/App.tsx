@@ -524,6 +524,28 @@ export default function App() {
     );
   }
 
+  // Maintenance mode check
+  if (auth.currentUser?.email !== 'alexparababi23@gmail.com') {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+        <div className="text-6xl mb-6">🛠️</div>
+        <h1 className="text-3xl font-bold text-primary mb-4 text-center uppercase tracking-wider">Modo de Mantenimiento</h1>
+        <p className="text-on-surface-variant text-center max-w-md mb-8 text-lg">
+          Actualmente estamos realizando mejoras y actualizaciones en la plataforma. Por favor, intenta acceder más tarde.
+        </p>
+        <button
+          onClick={() => {
+            signOut(auth);
+            setIsAuthenticated(false);
+          }}
+          className="bg-surface-container-high text-on-surface hover:bg-surface-container-highest px-6 py-3 rounded-lg font-medium transition-colors"
+        >
+          Cerrar Sesión
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-background text-on-surface antialiased min-h-screen flex flex-col font-sans">
       <Header
