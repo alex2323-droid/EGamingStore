@@ -130,7 +130,21 @@ export default function App() {
             await setDoc(doc(db, "siteSettings", "general"), loadedSettings);
           }
 
+
+          if (loadedSettings.useAutomaticBcvRate) {
+            try {
+              const bcvRes = await fetch('https://ve.dolarapi.com/v1/dolares');
+              const bcvData = await bcvRes.json();
+              const oficial = bcvData.find((d: any) => d.fuente === 'oficial');
+              if (oficial && oficial.promedio) {
+                loadedSettings.exchangeRate = oficial.promedio;
+              }
+            } catch(e) {
+              console.error("Failed to fetch BCV rate", e);
+            }
+          }
           setSiteSettings(loadedSettings);
+
         } else {
           // ensure initial DB state has it removed too
           const newSettings: SiteSettings = {
@@ -490,6 +504,7 @@ export default function App() {
       return (
         <GameRecharge
           game={selectedGame}
+          siteSettings={siteSettings}
           paymentMethods={siteSettings?.paymentMethods || PAYMENT_METHODS}
           promoCodes={promoCodes}
           onBack={() => setSelectedGame(null)}
@@ -521,28 +536,6 @@ export default function App() {
         onLoginSuccess={() => setIsAuthenticated(true)}
         siteSettings={siteSettings}
       />
-    );
-  }
-
-  // Maintenance mode check
-  if (auth.currentUser?.email !== 'alexparababi23@gmail.com') {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-        <div className="text-6xl mb-6">🛠️</div>
-        <h1 className="text-3xl font-bold text-primary mb-4 text-center uppercase tracking-wider">Modo de Mantenimiento</h1>
-        <p className="text-on-surface-variant text-center max-w-md mb-8 text-lg">
-          Actualmente estamos realizando mejoras y actualizaciones en la plataforma. Por favor, intenta acceder más tarde.
-        </p>
-        <button
-          onClick={() => {
-            signOut(auth);
-            setIsAuthenticated(false);
-          }}
-          className="bg-surface-container-high text-on-surface hover:bg-surface-container-highest px-6 py-3 rounded-lg font-medium transition-colors"
-        >
-          Cerrar Sesión
-        </button>
-      </div>
     );
   }
 

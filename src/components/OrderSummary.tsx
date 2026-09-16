@@ -14,10 +14,11 @@ interface Props {
   isVerified: boolean;
   playerId?: string;
   promoCodes?: PromoCode[];
+  exchangeRate?: number;
   onCheckoutSuccess: (order: Order) => void;
 }
 
-export default function OrderSummary({ game, selectedPackage, selectedPayment, isVerified, playerId, promoCodes = [], onCheckoutSuccess }: Props) {
+export default function OrderSummary({ game, selectedPackage, selectedPayment, isVerified, playerId, promoCodes = [], exchangeRate, onCheckoutSuccess }: Props) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [promoCodeInput, setPromoCodeInput] = useState('');
@@ -52,6 +53,7 @@ export default function OrderSummary({ game, selectedPackage, selectedPayment, i
     }, 250);
   };
 
+  
   const calculateFinalPrice = () => {
     if (!selectedPackage) return 0;
     let price = selectedPackage.price;
@@ -68,6 +70,11 @@ export default function OrderSummary({ game, selectedPackage, selectedPayment, i
     
     return price;
   };
+
+  const calculateFinalPriceVES = () => {
+    return calculateFinalPrice() * (exchangeRate || 1);
+  };
+
 
   const handleApplyPromo = () => {
     setPromoError('');
@@ -262,9 +269,23 @@ export default function OrderSummary({ game, selectedPackage, selectedPayment, i
             )}
             <div className="flex justify-between items-end mt-2">
               <span className="text-lg font-medium text-on-surface">Total</span>
-              <span className="font-display text-4xl font-extrabold text-primary leading-none">
-                {selectedPackage ? `Bs ${calculateFinalPrice().toFixed(2)}` : 'Bs 0.00'}
-              </span>
+                <div className="text-right">
+                  <span className="font-display text-4xl font-extrabold text-primary leading-none block">
+                    {selectedPayment?.currency === 'VES' && exchangeRate
+                      ? `Bs ${calculateFinalPriceVES().toFixed(2)}`
+                      : `$ ${calculateFinalPrice().toFixed(2)}`}
+                  </span>
+                  {selectedPayment?.currency === 'VES' && exchangeRate && (
+                    <span className="text-sm font-medium text-on-surface-variant block mt-1">
+                      (Tasa: Bs {exchangeRate})
+                    </span>
+                  )}
+                  {selectedPayment?.currency !== 'VES' && exchangeRate && (
+                    <span className="text-sm font-medium text-on-surface-variant block mt-1">
+                      (Equivalente: Bs {calculateFinalPriceVES().toFixed(2)})
+                    </span>
+                  )}
+                </div>
             </div>
           </div>
         </div>

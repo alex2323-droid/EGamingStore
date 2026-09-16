@@ -4,9 +4,10 @@ interface Props {
   packages: GamePackage[];
   selectedPackage: GamePackage | null;
   onSelect: (pkg: GamePackage) => void;
+  exchangeRate?: number;
 }
 
-export default function PackageSelection({ packages, selectedPackage, onSelect }: Props) {
+export default function PackageSelection({ packages, selectedPackage, onSelect, exchangeRate }: Props) {
   return (
     <section className="glass-panel rounded-xl p-6">
       <div className="flex items-center gap-3 mb-6">
@@ -37,7 +38,7 @@ export default function PackageSelection({ packages, selectedPackage, onSelect }
               <img 
                 src={pkg.iconUrl || undefined} 
                 alt={`${pkg.amount} ${pkg.currency}`} 
-                className={`w-16 h-16 object-contain mb-2 ${isSelected ? 'drop-shadow-[0_0_12px_rgba(0,170,242,0.6)] w-20 h-20' : 'drop-shadow-[0_0_8px_rgba(0,170,242,0.5)]'}`} 
+                className={`w-16 h-16 object-contain mb-2 ${isSelected ? 'drop-shadow-[0_0_12px_rgba(0,170,242,0.6)] w-20 h-20' : 'drop-shadow-[0_0_8px_rgba(0,170,242,0.5)]'}`}
               />
               
               <div>
@@ -47,13 +48,22 @@ export default function PackageSelection({ packages, selectedPackage, onSelect }
               
               <div className="flex flex-col items-center gap-1 mt-3">
                 {pkg.discountPercentage && (
-                  <span className="text-[10px] text-on-surface-variant line-through">Bs {pkg.price.toFixed(2)}</span>
+                  <span className="text-[10px] text-on-surface-variant line-through">
+                    {exchangeRate ? `Bs. ${(pkg.price * exchangeRate).toFixed(2)}` : `$${pkg.price.toFixed(2)}`}
+                  </span>
                 )}
                 <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
                   isSelected ? 'btn-primary text-white' : 'bg-surface-variant text-primary'
                 }`}>
-                  Bs {pkg.discountPercentage ? (pkg.price * (1 - pkg.discountPercentage / 100)).toFixed(2) : pkg.price.toFixed(2)}
+                  {exchangeRate 
+                    ? `Bs. ${((pkg.discountPercentage ? (pkg.price * (1 - pkg.discountPercentage / 100)) : pkg.price) * exchangeRate).toFixed(2)}` 
+                    : `$${(pkg.discountPercentage ? (pkg.price * (1 - pkg.discountPercentage / 100)) : pkg.price).toFixed(2)}`}
                 </div>
+                {exchangeRate && (
+                  <div className="text-[10px] text-on-surface-variant font-medium mt-0.5">
+                    $ {(pkg.discountPercentage ? (pkg.price * (1 - pkg.discountPercentage / 100)) : pkg.price).toFixed(2)}
+                  </div>
+                )}
               </div>
             </div>
           );

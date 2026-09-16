@@ -92,6 +92,6 @@ export const PAYMENT_METHODS: PaymentMethod[] = [
     id: 'pago_movil', 
     name: 'Pago Móvil', 
     iconType: 'payments',
-    instructions: 'Banco: Bancaribe\nCI: 32868567\nTeléfono: 0412-4780457'
+    instructions: 'Banco: Bancaribe\nCI: 32868567\nTeléfono: 0412-4780457', currency: 'VES'
   },
 ];

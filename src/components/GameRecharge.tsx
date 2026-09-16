@@ -1,5 +1,5 @@
 import { ArrowLeft } from 'lucide-react';
-import { PromoCode, Game, GamePackage, PaymentMethod, Order } from '../types';
+import { PromoCode, Game, GamePackage, PaymentMethod, Order, SiteSettings } from '../types';
 import Hero from './Hero';
 import PlayerVerification from './PlayerVerification';
 import PackageSelection from './PackageSelection';
@@ -10,12 +10,13 @@ import { useState } from 'react';
 interface Props {
   game: Game;
   paymentMethods: PaymentMethod[];
+  siteSettings?: SiteSettings | null;
   promoCodes: PromoCode[];
   onBack: () => void;
   onCheckoutSuccess: (order: Order) => void;
 }
 
-export default function GameRecharge({ game, paymentMethods, promoCodes, onBack, onCheckoutSuccess }: Props) {
+export default function GameRecharge({ game, paymentMethods, promoCodes, onBack, onCheckoutSuccess, siteSettings }: Props) {
   const [playerId, setPlayerId] = useState('');
   const [isVerified, setIsVerified] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<GamePackage | null>((game.packages && game.packages.length > 1) ? game.packages[1] : (game.packages && game.packages.length > 0 ? game.packages[0] : null));
@@ -52,6 +53,7 @@ export default function GameRecharge({ game, paymentMethods, promoCodes, onBack,
             packages={game.packages}
             selectedPackage={selectedPackage}
             onSelect={setSelectedPackage}
+            exchangeRate={siteSettings?.exchangeRate}
           />
           
           <PaymentMethodSelection 

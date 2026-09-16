@@ -21,6 +21,7 @@ export interface PaymentMethod {
   name: string;
   iconType: 'payments' | 'account_balance' | 'credit_card' | 'binance';
   instructions?: string;
+  currency?: 'USD' | 'VES';
 }
 
 export interface Game {
@@ -59,4 +60,6 @@ export interface SiteSettings {
   showMascotSupport: boolean;
   showMascotLogin: boolean;
   paymentMethods: PaymentMethod[];
+  exchangeRate?: number;
+  useAutomaticBcvRate?: boolean;
 }
