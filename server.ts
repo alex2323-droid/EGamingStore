@@ -459,7 +459,7 @@ async function startServer() {
           // Parse player ID and zone ID if provided in format like 123456(1234)
           let userId = order.playerId || '';
           let zoneId = '';
-          const zoneMatch = userId.match(/^(.*?)[(\s]+(\d+)[)\s]*$/);
+          const zoneMatch = userId.match(/^(.*?)[(\s]+([^)]+)[)\s]*$/);
           if (zoneMatch) {
             userId = zoneMatch[1].trim();
             zoneId = zoneMatch[2].trim();
