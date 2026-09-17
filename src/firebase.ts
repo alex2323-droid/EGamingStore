@@ -17,7 +17,10 @@ try {
 }
 export const auth = authInstance;
 
-export const db = initializeFirestore(app, {}, 'ai-studio-53e6bc08-2f74-4f5e-816d-59b2e44f3829');
+const firestoreDbId = (firebaseConfig as any).firestoreDatabaseId || (firebaseConfig as any).databaseId || 'ai-studio-53e6bc08-2f74-4f5e-816d-59b2e44f3829';
+export const db = initializeFirestore(app, {
+  experimentalForceLongPolling: true,
+}, firestoreDbId);
 
 
 

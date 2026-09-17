@@ -21,9 +21,9 @@ export default function Profile({ orders }: Props) {
   };
 
   const currentEmail = auth.currentUser?.email || 'usuario@correo.com';
-  const isUsernameOnly = currentEmail.endsWith('@egamingstore.com');
+  const isUsernameOnly = currentEmail.endsWith('@nexplay.com') || currentEmail.endsWith('@egamingstore.com');
   const displayName = isUsernameOnly 
-    ? currentEmail.replace('@egamingstore.com', '') 
+    ? currentEmail.replace('@nexplay.com', '').replace('@egamingstore.com', '') 
     : currentEmail;
 
   return (
@@ -40,9 +40,9 @@ export default function Profile({ orders }: Props) {
             <Shield size={120} />
           </div>
           
-          <div className="relative z-10 w-24 h-24 rounded-full bg-surface-dim border-2 border-primary flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(238,119,8,0.3)]">
-            <UserIcon size={40} className="text-primary" />
-            <div className="absolute -bottom-2 -right-2 bg-gradient-to-r from-gradient-orange-start to-gradient-orange-end text-white rounded-full p-1 text-[10px] font-bold border-2 border-background flex items-center justify-center">
+          <div className="relative z-10 w-24 h-24 rounded-full bg-surface-dim border-2 border-cyan-400 flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(0,210,255,0.35)]">
+            <UserIcon size={40} className="text-cyan-400" />
+            <div className="absolute -bottom-2 -right-2 bg-gradient-to-r from-cyan-400 to-blue-600 text-slate-950 rounded-full p-1.5 text-[10px] font-bold border-2 border-background flex items-center justify-center shadow-[0_0_10px_rgba(0,210,255,0.5)]">
               <Crown size={12} />
             </div>
           </div>

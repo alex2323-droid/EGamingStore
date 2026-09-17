@@ -42,9 +42,9 @@ export default function ThemeSwitcher() {
   };
 
   const getThemeName = () => {
-    if (theme === 'theme-dark-blue') return 'Azul Oscuro';
-    if (theme === 'theme-dark') return 'Oscuro';
-    return 'Claro';
+    if (theme === 'theme-dark-blue') return 'NexPlay Azul Cyber';
+    if (theme === 'theme-dark') return 'Negro Noche';
+    return 'Modo Claro';
   };
 
   return (

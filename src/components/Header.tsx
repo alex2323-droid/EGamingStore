@@ -1,5 +1,6 @@
 import { Menu, User, Mail, Home, ShieldAlert } from 'lucide-react';
 import ThemeSwitcher from './ThemeSwitcher';
+import NexPlayLogo from './NexPlayLogo';
 
 interface Props {
   activeTab: string;
@@ -13,16 +14,25 @@ export default function Header({ activeTab, isAdmin, onNavigate }: Props) {
       <div className="flex items-center gap-2">
         <button 
           onClick={() => onNavigate('support')}
+          title="Menú y Soporte"
           className={`transition-all duration-200 active:scale-95 flex items-center justify-center p-2 rounded-xl ${activeTab === 'support' ? 'bg-primary/10 text-primary' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'}`}
         >
           <Menu size={24} />
         </button>
+        <button 
+          onClick={() => onNavigate('home')}
+          className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ${activeTab === 'home' ? 'bg-primary/15 text-primary border border-primary/30' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'}`}
+          title="Ir al Inicio"
+        >
+          <Home size={16} />
+          <span>Inicio</span>
+        </button>
       </div>
       <button 
         onClick={() => onNavigate('home')}
-        className={`font-display text-xl font-bold tracking-tighter uppercase cursor-pointer transition-all ${activeTab === 'home' ? 'text-primary' : 'text-on-surface hover:opacity-80'}`}
+        className="cursor-pointer transition-all active:scale-95 group"
       >
-        E Gaming Store
+        <NexPlayLogo size="sm" variant="compact" showSubtitle={false} />
       </button>
       <div className="flex items-center gap-1 sm:gap-2">
         <ThemeSwitcher />

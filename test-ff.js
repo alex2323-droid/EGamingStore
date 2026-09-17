@@ -1,5 +1,8 @@
-import pkg from '@pure0cd/freefire-api';
-const api = new pkg();
-api.searchAccount('255767228').then(players => {
-  console.log(players);
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const { FreeFireAPI } = require('ffapis');
+const api = new FreeFireAPI();
+api.getPlayerProfile('255767228').then(profile => {
+  console.log(profile.accountInfo?.accountName || profile.AccountInfo?.AccountName);
+  console.log(profile);
 }).catch(console.error);

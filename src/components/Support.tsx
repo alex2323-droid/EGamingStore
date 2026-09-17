@@ -31,11 +31,16 @@ export default function Support({ siteSettings }: Props) {
   
   const showMascot = siteSettings ? siteSettings.showMascotSupport : true;
   const currentMascotUrl = siteSettings?.mascotSupportUrl || mascotSupportImg;
+  const rawPhone = siteSettings?.supportPhone || "+584142943532";
+  const cleanPhone = rawPhone.replace(/\D/g, "");
+  const formattedPhone = rawPhone.startsWith("+58") 
+    ? `+58 ${rawPhone.slice(3, 6)}-${rawPhone.slice(6)}` 
+    : rawPhone;
 
   return (
     <div className="max-w-4xl mx-auto px-4 md:px-8 py-8 w-full pb-24 md:pb-8 animation-fade-in">
-      <div className="mb-8 flex flex-col md:flex-row items-center md:items-end gap-6 bg-surface-container rounded-2xl p-6 border border-glass-border shadow-lg overflow-hidden relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent pointer-events-none"></div>
+      <div className="mb-8 flex flex-col md:flex-row items-center md:items-end gap-6 bg-surface/90 rounded-2xl p-6 border border-cyan-500/20 shadow-[0_4px_25px_rgba(0,0,0,0.4)] overflow-hidden relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-transparent pointer-events-none"></div>
         {showMascot && (
           <img
             src={currentMascotUrl}
@@ -45,7 +50,7 @@ export default function Support({ siteSettings }: Props) {
         )}
         <div className="z-10 text-center md:text-left">
           <h1 className="font-display text-2xl md:text-3xl font-bold text-on-surface">
-            Centro de Soporte
+            Centro de <span className="text-cyan-400">Soporte</span>
           </h1>
           <p className="text-on-surface-variant font-medium mt-1">
             Estamos aquí para ayudarte. Contáctanos a través de nuestros canales
@@ -55,8 +60,8 @@ export default function Support({ siteSettings }: Props) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-        <div className="glass-panel p-6 rounded-2xl flex flex-col items-center text-center gap-4 border border-primary/30 shadow-[0_0_20px_rgba(238,119,8,0.05)] hover:border-primary/60 transition-colors cursor-pointer">
-          <div className="w-16 h-16 rounded-full bg-[#25D366]/20 text-[#25D366] flex items-center justify-center">
+        <div className="glass-panel p-6 rounded-2xl flex flex-col items-center text-center gap-4 border border-cyan-500/30 shadow-[0_0_20px_rgba(0,210,255,0.08)] hover:border-cyan-400/60 transition-colors">
+          <div className="w-16 h-16 rounded-full bg-[#25D366]/20 text-[#25D366] flex items-center justify-center shadow-[0_0_15px_rgba(37,211,102,0.2)]">
             <MessageCircle size={32} className="fill-current" />
           </div>
           <div>
@@ -67,8 +72,13 @@ export default function Support({ siteSettings }: Props) {
               Respuestas rápidas 24/7 a través de nuestro canal de WhatsApp para
               problemas urgentes y verificación de pagos.
             </p>
-            <a href="https://wa.me/584124780457" target="_blank" rel="noopener noreferrer" className="bg-[#25D366] text-white font-bold py-2.5 px-6 rounded-lg w-full hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
-              <MessageCircle size={18} /> +58 412-4780457
+            <a 
+              href={`https://wa.me/${cleanPhone}`} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="bg-[#25D366] text-white font-black py-2.5 px-6 rounded-xl w-full hover:opacity-90 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(37,211,102,0.3)]"
+            >
+              <MessageCircle size={18} /> {formattedPhone}
             </a>
           </div>
         </div>
@@ -114,7 +124,7 @@ export default function Support({ siteSettings }: Props) {
             const isOpen = openFaq === index;
             return (
               <div
-                key={index}
+                key={`faq-${index}-${faq.q.substring(0, 10)}`}
                 className="glass-panel rounded-xl overflow-hidden border border-glass-border transition-colors cursor-pointer hover:border-primary/30"
                 onClick={() => setOpenFaq(isOpen ? null : index)}
               >

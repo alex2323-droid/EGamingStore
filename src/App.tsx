@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { PromoCode, Game, Order, SiteSettings } from "./types";
+import { PromoCode, Game, Order, SiteSettings, isGameGiftCard } from "./types";
 import { GAMES, PAYMENT_METHODS } from "./data";
 import { MessageCircle } from "lucide-react";
 import Header from "./components/Header";
@@ -51,41 +51,11 @@ export default function App() {
       try {
         const gamesSnap = await getDocs(collection(db, "games"));
         if (!gamesSnap.empty) {
-          let loadedGames = gamesSnap.docs.map((d) => d.data() as Game);
-          
-          // Migrate games to remove the hardcoded 10% bonus/discount if the user hasn't touched it
-          let changedGames = false;
-          loadedGames = loadedGames.map(game => {
-            let gameChanged = false;
-            const packagesArray = game.packages || [];
-            const newPackages = packagesArray.map(pkg => {
-              const newPkg = { ...pkg };
-              if (newPkg.bonus === 10) {
-                delete newPkg.bonus;
-                gameChanged = true;
-              }
-              if (newPkg.discountPercentage === 10) {
-                delete newPkg.discountPercentage;
-                gameChanged = true;
-              }
-              return newPkg;
-            });
-            if (gameChanged) {
-              changedGames = true;
-              return { ...game, packages: newPackages };
-            }
-            return game;
-          });
-
-          if (changedGames) {
-            const batch = writeBatch(db);
-            loadedGames.forEach(game => {
-              batch.set(doc(db, "games", game.id), game);
-            });
-            await batch.commit();
-          }
-
-          setGames(loadedGames);
+          const loadedGames = gamesSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as Game);
+          const hasGiftCards = loadedGames.some((g) => isGameGiftCard(g));
+          const baseGames = !hasGiftCards ? [...loadedGames, ...GAMES.filter((g) => isGameGiftCard(g))] : loadedGames;
+          const uniqueGames: Game[] = Array.from(new Map<string, Game>(baseGames.map(g => [g.id, g])).values());
+          setGames(uniqueGames);
         } else {
           // If DB is empty, fall back to initial GAMES
           setGames(GAMES);
@@ -99,9 +69,10 @@ export default function App() {
         const promoSnap = await getDocs(collection(db, "promoCodes"));
         if (!promoSnap.empty) {
           const loadedPromoCodes = promoSnap.docs.map(
-            (d) => d.data() as PromoCode,
+            (d) => ({ id: d.id, ...d.data() }) as PromoCode,
           );
-          setPromoCodes(loadedPromoCodes);
+          const uniquePromoCodes: PromoCode[] = Array.from(new Map<string, PromoCode>(loadedPromoCodes.map(c => [c.id, c])).values());
+          setPromoCodes(uniquePromoCodes);
         }
       } catch (error) {
         console.error("Failed to load promo codes", error);
@@ -111,25 +82,6 @@ export default function App() {
         const settingsDoc = await getDoc(doc(db, "siteSettings", "general"));
         if (settingsDoc.exists()) {
           const loadedSettings = settingsDoc.data() as SiteSettings;
-          
-          // Migrate payment methods to remove zelle and update pago movil
-          let changed = false;
-          if (loadedSettings.paymentMethods) {
-            const hasZelle = loadedSettings.paymentMethods.some(m => m.id === 'zelle');
-            if (hasZelle) {
-              loadedSettings.paymentMethods = loadedSettings.paymentMethods.filter(m => m.id !== 'zelle');
-              changed = true;
-            }
-            const pagoMovilIndex = loadedSettings.paymentMethods.findIndex(m => m.id === 'pago_movil');
-            if (pagoMovilIndex !== -1 && !loadedSettings.paymentMethods[pagoMovilIndex].instructions?.includes("Bancaribe")) {
-              loadedSettings.paymentMethods[pagoMovilIndex].instructions = 'Banco: Bancaribe\nCI: 32868567\nTeléfono: 0412-4780457';
-              changed = true;
-            }
-          }
-          if (changed) {
-            await setDoc(doc(db, "siteSettings", "general"), loadedSettings);
-          }
-
 
           if (loadedSettings.useAutomaticBcvRate) {
             try {
@@ -146,7 +98,7 @@ export default function App() {
           setSiteSettings(loadedSettings);
 
         } else {
-          // ensure initial DB state has it removed too
+          // fallback to default settings without trying to write if unauthenticated
           const newSettings: SiteSettings = {
             mascotHomeUrl: "",
             mascotSupportUrl: "",
@@ -154,13 +106,35 @@ export default function App() {
             showMascotHome: true,
             showMascotSupport: true,
             showMascotLogin: true,
-            paymentMethods: PAYMENT_METHODS
+            paymentMethods: PAYMENT_METHODS,
+            supportPhone: "+584142943532",
+            binanceEnabled: false,
+            binanceApiKey: "",
+            binanceApiSecret: "",
+            binanceMerchantId: "",
+            binancePayId: "",
+            binanceValidationMode: "auto",
           };
-          await setDoc(doc(db, "siteSettings", "general"), newSettings);
           setSiteSettings(newSettings);
         }
       } catch (error) {
-        console.error("Failed to load site settings", error);
+        console.warn("Could not load remote site settings, using defaults", error);
+        setSiteSettings((prev) => prev || {
+          mascotHomeUrl: "",
+          mascotSupportUrl: "",
+          mascotLoginUrl: "",
+          showMascotHome: true,
+          showMascotSupport: true,
+          showMascotLogin: true,
+          paymentMethods: PAYMENT_METHODS,
+          supportPhone: "+584142943532",
+          binanceEnabled: false,
+          binanceApiKey: "",
+          binanceApiSecret: "",
+          binanceMerchantId: "",
+          binancePayId: "",
+          binanceValidationMode: "auto",
+        });
       }
 
       setLoadingGames(false);
@@ -223,9 +197,10 @@ export default function App() {
               }
               
               unsubscribeOrders = onSnapshot(ordersQuery, (querySnapshot) => {
-                const loadedOrders = querySnapshot.docs.map(doc => doc.data() as Order);
-                loadedOrders.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-                setOrders(loadedOrders);
+                const loadedOrders = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as Order);
+                const uniqueOrders: Order[] = Array.from(new Map<string, Order>(loadedOrders.map(o => [o.id, o])).values());
+                uniqueOrders.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                setOrders(uniqueOrders);
               }, (error) => {
                 console.error("Error fetching orders:", error);
               });
@@ -285,9 +260,9 @@ export default function App() {
     tab: "home" | "orders" | "support" | "profile" | "inbox" | "admin",
   ) => {
     setActiveTab(tab);
-    if (tab !== "home") {
-      setSelectedGame(null); // Clear game selection if navigating away
-    }
+    // Always clear selectedGame so that clicking "Inicio" or any tab returns to the main view
+    setSelectedGame(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleSelectGame = (game: Game) => {
@@ -422,14 +397,14 @@ export default function App() {
         }).then(async (response) => {
           if (response.ok) {
             const resData = await response.json();
-            if (resData.hankGamesResult) {
+            if (resData.assaxResult) {
               // Update order in Firestore with the API result
               try {
                 await updateDoc(doc(db, 'orders', updatedOrder.id), {
-                  hankGamesResult: resData.hankGamesResult
+                  assaxResult: resData.assaxResult
                 });
               } catch (e) {
-                console.error('Failed to update order with hankGamesResult', e);
+                console.error('Failed to update order with assaxResult', e);
               }
             }
           }

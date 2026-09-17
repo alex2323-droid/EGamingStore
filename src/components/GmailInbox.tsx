@@ -161,8 +161,8 @@ export default function GmailInbox() {
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {emails.map((email) => (
-            <div key={email.id} className="glass-panel p-4 rounded-xl border border-glass-border hover:bg-surface-container transition-colors group cursor-pointer">
+          {emails.map((email, index) => (
+            <div key={`${email.id || 'email'}-${index}`} className="glass-panel p-4 rounded-xl border border-glass-border hover:bg-surface-container transition-colors group cursor-pointer">
               <div className="flex justify-between items-start gap-4 mb-2">
                 <h3 className="font-medium text-on-surface flex-grow truncate mr-4">{email.subject}</h3>
                 <span className="text-xs text-on-surface-variant whitespace-nowrap hidden sm:block shrink-0">

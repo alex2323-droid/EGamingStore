@@ -1,6 +1,6 @@
-import { CheckCircle, Info, User, AlertCircle } from 'lucide-react';
-import { useState } from 'react';
-import { GamePackage, Game } from '../types';
+import { CheckCircle2, Info, User, Mail, Gift, Radio } from 'lucide-react';
+import { useEffect } from 'react';
+import { GamePackage, Game, isGameGiftCard, isGameService } from '../types';
 
 interface Props {
   playerId: string;
@@ -11,143 +11,79 @@ interface Props {
   game?: Game;
 }
 
-export default function PlayerVerification({ playerId, setPlayerId, isVerified, setIsVerified, selectedPackage, game }: Props) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [playerName, setPlayerName] = useState<string | null>(null);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+export default function PlayerVerification({ playerId, setPlayerId, isVerified, setIsVerified, game }: Props) {
+  const isGift = isGameGiftCard(game);
+  const isService = isGameService(game);
 
-  const handleVerify = async () => {
-    if (!playerId) return;
-    
-    // Si no hay paquete, al menos usamos el primero para validar, ya que HankGames requiere un packageId
-    const packageIdToUse = selectedPackage?.id || (game?.packages && game.packages.length > 0 ? game.packages[0].id : null);
-    
-    if (!packageIdToUse) {
-      setErrorMsg("Selecciona un paquete primero.");
-      return;
+  // Cuando el usuario ingresa su ID / contacto con al menos 3 caracteres, se considera listo para continuar
+  useEffect(() => {
+    if (playerId && playerId.trim().length >= 3) {
+      setIsVerified(true);
+    } else {
+      setIsVerified(false);
     }
-
-    setIsLoading(true);
-    setErrorMsg(null);
-    setPlayerName(null);
-    
-    try {
-      let apiUrl = import.meta.env.VITE_API_URL || '';
-      if (apiUrl.includes('<AQUI')) apiUrl = '';
-      apiUrl = apiUrl.replace(/\/+$/, '');
-      
-      const res = await fetch(`${apiUrl}/api/validate-player`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ packageId: packageIdToUse, playerId: playerId })
-      });
-
-      const data = await res.json();
-
-      if (res.ok && !data.error) {
-        setIsVerified(true);
-        // Suponiendo que la API devuelve el nombre en data.name, data.customerName, o similar
-        const detectedName = data.name || data.customerName || data.username || data.player_name || data.data?.name;
-        if (detectedName) {
-           setPlayerName(detectedName);
-        } else {
-           setPlayerName("Verificado (Nombre oculto)");
-        }
-      } else {
-        setErrorMsg(data.error || 'ID inválido o error de validación');
-        if (data.error && data.error.includes('autenticación')) {
-          setTimeout(() => {
-            setIsVerified(true);
-            setPlayerName("Modo manual (Error de API)");
-          }, 500);
-        } else {
-          // Si el ID es inválido, igual no lo bloqueamos permanentemente por si acaso
-          setTimeout(() => {
-            setIsVerified(true);
-            setPlayerName("Modo manual");
-          }, 2000);
-        }
-      }
-    } catch (e) {
-      console.error(e);
-      // Fallback a validación local si la API falla
-      setTimeout(() => {
-        setIsVerified(true);
-        setPlayerName("Validación local (API no disponible)");
-      }, 500);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [playerId, setIsVerified]);
 
   return (
-    <section className="glass-panel rounded-xl p-6 relative overflow-hidden group">
-      <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors duration-300 pointer-events-none"></div>
-      
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-sm font-semibold text-primary border border-glass-border">1</div>
-        <h2 className="font-display text-lg font-semibold text-on-surface">ID de Jugador</h2>
+    <section className="glass-panel rounded-2xl p-6 relative overflow-hidden group border border-cyan-500/20 bg-surface/90 shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+      <div className="absolute top-0 right-0 w-36 h-36 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center text-sm font-black text-cyan-400 border border-cyan-500/40 shadow-[0_0_12px_rgba(0,210,255,0.3)]">
+            {isGift ? <Gift size={16} /> : isService ? <Radio size={16} /> : 2}
+          </div>
+          <h2 className="font-display text-lg font-bold text-on-surface">
+            {isGift 
+              ? `Datos de Entrega (${game?.name || 'Gift Card'})` 
+              : isService 
+              ? `ID / Usuario del Servicio (${game?.name || 'Servicio'})`
+              : `ID de Jugador (${game?.name || 'Juego'})`}
+          </h2>
+        </div>
+        {playerId.trim().length >= 3 && (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 animate-in fade-in">
+            <CheckCircle2 size={14} /> {isGift ? 'Listo para entrega' : 'ID Listo'}
+          </span>
+        )}
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-grow">
-          <User className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" size={20} />
-          <input 
-            type="text" 
-            value={playerId}
-            onChange={(e) => {
-              // Permitimos paréntesis y espacios para la zona si es necesario, ej: 123456(1234)
-              const val = e.target.value.replace(/[^0-9()\s-]/g, '');
-              if (val.length <= 25) {
-                setPlayerId(val);
-                setIsVerified(false);
-                setPlayerName(null);
-                setErrorMsg(null);
-              }
-            }}
-            placeholder="Ingresa tu UID de jugador (ej: 123456 o 123456(1234))" 
-            maxLength={25}
-            className={`w-full bg-surface-dim border rounded-lg py-3 pl-10 pr-4 text-on-surface focus:outline-none transition-colors placeholder:text-on-surface-variant ${errorMsg ? 'border-red-500/50 focus:border-red-500' : 'border-glass-border focus:border-primary'}`}
-          />
-        </div>
-
-        <button 
-          onClick={handleVerify}
-          disabled={!playerId || isLoading || isVerified}
-          className={`
-            font-semibold py-3 px-6 rounded-lg transition-colors border flex items-center justify-center gap-2 whitespace-nowrap
-            ${isVerified 
-              ? 'bg-green-500/20 text-green-400 border-green-500/50 cursor-default' 
-              : 'bg-surface-variant hover:bg-surface-bright text-on-surface border-glass-border'
+      <div className="relative">
+        {isGift ? (
+          <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-cyan-400/70" size={20} />
+        ) : isService ? (
+          <Radio className="absolute left-3.5 top-1/2 -translate-y-1/2 text-cyan-400/70" size={20} />
+        ) : (
+          <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-cyan-400/70" size={20} />
+        )}
+        <input 
+          type="text" 
+          value={playerId}
+          onChange={(e) => {
+            const val = e.target.value;
+            if (val.length <= 60) {
+              setPlayerId(val);
             }
-            ${(!playerId || isLoading) && !isVerified ? 'opacity-50 cursor-not-allowed' : ''}
-          `}
-        >
-          {isLoading ? (
-            <span className="animate-pulse">Verificando...</span>
-          ) : isVerified ? (
-            <>Verificado <CheckCircle size={18} /></>
-          ) : (
-            <>Verificar <CheckCircle size={18} /></>
-          )}
-        </button>
+          }}
+          placeholder={
+            isGift 
+              ? "Ingresa tu Correo o WhatsApp donde recibirás el código" 
+              : isService
+              ? "Ingresa tu ID de cuenta o @usuario (ej: ID de app o @usuario)"
+              : "Ingresa tu ID de jugador (ej: 123456789)"
+          } 
+          maxLength={60}
+          className="w-full bg-surface-container-low border border-cyan-500/30 rounded-xl py-3.5 pl-11 pr-4 text-on-surface font-medium focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all placeholder:text-on-surface-variant/60 shadow-inner"
+        />
       </div>
 
-      {playerName && (
-        <div className="mt-3 p-3 bg-primary/10 border border-primary/20 rounded-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
-           <User size={16} className="text-primary" />
-           <span className="text-sm text-on-surface">Nombre detectado: <strong className="text-primary">{playerName}</strong></span>
-        </div>
-      )}
-
-      {errorMsg && (
-        <p className="text-sm text-red-400 mt-3 flex items-center gap-1.5 animate-in fade-in">
-          <AlertCircle size={14} /> {errorMsg}
-        </p>
-      )}
-
-      <p className="text-sm text-on-surface-variant mt-3 flex items-center gap-1.5">
-        <Info size={14} /> Puedes encontrar tu UID en tu perfil del juego. Si requiere zona, usa formato ID(ZONA).
+      <p className="text-xs text-on-surface-variant mt-3 flex items-center gap-1.5">
+        <Info size={14} className="text-cyan-400 shrink-0" />
+        {isGift 
+          ? "El código o PIN digital de la tarjeta se enviará directamente a este contacto tras verificar el pago."
+          : isService
+          ? "Introduce tu ID o usuario de la plataforma exactamente como aparece en tu perfil para acreditar tus monedas/estrellas."
+          : "Introduce tu ID exactamente como aparece en tu perfil del juego para garantizar la entrega inmediata."}
       </p>
     </section>
   );

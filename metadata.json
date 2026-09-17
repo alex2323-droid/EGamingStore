@@ -1,6 +1,6 @@
 {
-  "name": "E Gaming Store",
-  "description": "Tienda en línea para recargar saldo y monedas de juegos",
+  "name": "NexPlay",
+  "description": "NexPlay - Recargas de videojuegos rápidas, seguras y al mejor precio",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

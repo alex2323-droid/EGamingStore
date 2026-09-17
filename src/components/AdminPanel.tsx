@@ -6,6 +6,7 @@ import {
   SiteSettings,
   Order,
   PaymentMethod,
+  isGameGiftCard,
 } from "../types";
 import {
   Save,
@@ -13,6 +14,7 @@ import {
   Trash2,
   Edit2,
   Gamepad2,
+  Gift,
   X,
   Check,
   Tag,
@@ -20,7 +22,18 @@ import {
   CreditCard,
   ShoppingCart,
   Eye,
+  EyeOff,
   Mail,
+  Bitcoin,
+  ShieldCheck,
+  Key,
+  CheckCircle2,
+  AlertCircle,
+  RefreshCw,
+  Zap,
+  QrCode,
+  ImageIcon,
+  Upload,
 } from "lucide-react";
 import { PAYMENT_METHODS } from "../data";
 import EmailComposer from "./EmailComposer";
@@ -67,10 +80,77 @@ export default function AdminPanel({
     showMascotSupport: true,
     showMascotLogin: true,
     paymentMethods: PAYMENT_METHODS,
+    supportPhone: "+584142943532",
+    binanceEnabled: false,
+    binanceApiKey: "",
+    binanceApiSecret: "",
+    binanceMerchantId: "",
+    binancePayId: "",
+    binanceValidationMode: "auto",
   };
   const [localSettings, setLocalSettings] = useState<SiteSettings>(
     siteSettings || defaultSettings,
   );
+
+  const [isTestingBinance, setIsTestingBinance] = useState(false);
+  const [binanceTestResult, setBinanceTestResult] = useState<{
+    success: boolean;
+    message: string;
+    latencyMs?: number;
+    accountType?: string;
+    usdtBalance?: string;
+    permissions?: string[];
+    error?: string;
+  } | null>(null);
+  const [showBinanceApiKey, setShowBinanceApiKey] = useState(false);
+  const [showBinanceSecret, setShowBinanceSecret] = useState(false);
+
+  const handleTestBinanceConnection = async () => {
+    setIsTestingBinance(true);
+    setBinanceTestResult(null);
+
+    try {
+      let apiUrl = import.meta.env.VITE_API_URL || "";
+      if (apiUrl.includes("<AQUI")) apiUrl = "";
+      apiUrl = apiUrl.replace(/\/+$/, "");
+
+      const res = await fetch(`${apiUrl}/api/binance/test-connection`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          apiKey: localSettings.binanceApiKey,
+          apiSecret: localSettings.binanceApiSecret,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setBinanceTestResult({
+          success: true,
+          message: data.message || "Conexión exitosa con Binance API",
+          latencyMs: data.latencyMs,
+          accountType: data.accountType,
+          usdtBalance: data.usdtBalance,
+          permissions: data.permissions,
+        });
+      } else {
+        setBinanceTestResult({
+          success: false,
+          message: data.error || "No se pudo autenticar con Binance API.",
+          error: data.error,
+        });
+      }
+    } catch (err: any) {
+      setBinanceTestResult({
+        success: false,
+        message: err.message || "Error de red al conectar con el servidor.",
+        error: err.message,
+      });
+    } finally {
+      setIsTestingBinance(false);
+    }
+  };
 
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
 
@@ -211,6 +291,7 @@ export default function AdminPanel({
       name: "Nuevo Juego",
       publisher: "",
       category: "mobile",
+      isGiftCard: false,
       currencyName: "Monedas",
       bannerUrl: "",
       cardUrl: "",
@@ -218,6 +299,22 @@ export default function AdminPanel({
     };
     setLocalGames((prev) => [...prev, newGame]);
     setSelectedGameId(newGame.id);
+  };
+
+  const handleAddGiftCard = () => {
+    const newGiftCard: Game = {
+      id: `giftcard_${Date.now()}`,
+      name: "Nueva Tarjeta de Regalo",
+      publisher: "Digital",
+      category: "giftcard",
+      isGiftCard: true,
+      currencyName: "USD",
+      bannerUrl: "",
+      cardUrl: "",
+      packages: [],
+    };
+    setLocalGames((prev) => [...prev, newGiftCard]);
+    setSelectedGameId(newGiftCard.id);
   };
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -261,20 +358,6 @@ export default function AdminPanel({
     }
     setIsSaving(false);
   };
-
-  const isInitialMount = useRef(true);
-  useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
-    }
-    
-    const timeoutId = setTimeout(() => {
-      handleSave(true);
-    }, 1000);
-
-    return () => clearTimeout(timeoutId);
-  }, [localGames, localPromoCodes, localSettings]);
 
   const handleAddPromoCode = () => {
     const newCode: PromoCode = {
@@ -461,15 +544,19 @@ export default function AdminPanel({
                         }));
 
                         if (existingIdx >= 0) {
-                          // Update packages
+                          // Update packages and ensure ID matches Assax product ID
+                          newGames[existingIdx].id = apiGame.productId;
                           newGames[existingIdx].packages = packages;
+                          if (newGames[existingIdx].publisher && newGames[existingIdx].publisher.toLowerCase().includes('assax')) {
+                            newGames[existingIdx].publisher = '';
+                          }
                           updated++;
                         } else {
                           // Create new game
                           newGames.push({
                             id: apiGame.productId,
                             name: apiGame.name,
-                            publisher: 'Assax',
+                            publisher: '',
                             bannerUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80',
                             cardUrl: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&q=80&w=600&h=800',
                             currencyName: 'Coins',
@@ -504,9 +591,9 @@ export default function AdminPanel({
               </button>
             </div>
             <div className="flex flex-col max-h-[60vh] overflow-y-auto">
-              {localGames.map((game) => (
+              {localGames.map((game, index) => (
                 <button
-                  key={game.id}
+                  key={`${game.id || 'game'}-${index}`}
                   onClick={() => setSelectedGameId(game.id)}
                   className={`p-4 text-left border-b border-glass-border transition-colors flex items-center gap-3 ${
                     selectedGameId === game.id
@@ -521,12 +608,19 @@ export default function AdminPanel({
                         alt={game.name}
                         className="w-full h-full object-cover"
                       />
+                    ) : isGameGiftCard(game) ? (
+                      <Gift size={20} className="text-cyan-400" />
                     ) : (
                       <Gamepad2 size={20} className="text-on-surface-variant" />
                     )}
                   </div>
-                  <div>
-                    <h4 className="font-bold text-sm text-on-surface">
+                  <div className="overflow-hidden">
+                    <div className="flex items-center gap-1.5">
+                      <span className={`text-[9px] font-black px-1.5 py-0.2 rounded uppercase ${isGameGiftCard(game) ? 'bg-cyan-500/20 text-cyan-400' : 'bg-primary/20 text-primary'}`}>
+                        {isGameGiftCard(game) ? 'Gift Card' : 'Juego'}
+                      </span>
+                    </div>
+                    <h4 className="font-bold text-sm text-on-surface truncate">
                       {game.name}
                     </h4>
                     <p className="text-xs text-on-surface-variant">
@@ -535,12 +629,20 @@ export default function AdminPanel({
                   </div>
                 </button>
               ))}
-              <button
-                onClick={handleAddGame}
-                className="p-4 w-full flex items-center justify-center gap-2 text-primary hover:bg-surface-elevated transition-colors font-bold text-sm"
-              >
-                <Plus size={16} /> Agregar Juego
-              </button>
+              <div className="grid grid-cols-2 gap-1 p-2 border-t border-glass-border">
+                <button
+                  onClick={handleAddGame}
+                  className="p-2.5 rounded-lg flex items-center justify-center gap-1.5 bg-primary/10 text-primary hover:bg-primary/20 transition-colors font-bold text-xs"
+                >
+                  <Plus size={14} /> + Juego
+                </button>
+                <button
+                  onClick={handleAddGiftCard}
+                  className="p-2.5 rounded-lg flex items-center justify-center gap-1.5 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 transition-colors font-bold text-xs"
+                >
+                  <Gift size={14} /> + Gift Card
+                </button>
+              </div>
             </div>
           </div>
 
@@ -588,13 +690,13 @@ export default function AdminPanel({
                 <div className="mb-6 bg-surface-elevated p-4 rounded-xl border border-glass-border">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="font-bold text-on-surface text-sm">
-                      Información del Juego
+                      Información del Producto
                     </h3>
                     <button
                       onClick={handleDeleteGame}
                       className="text-red-400 hover:text-red-300 text-xs flex items-center gap-1 font-bold"
                     >
-                      <Trash2 size={14} /> Eliminar Juego
+                      <Trash2 size={14} /> Eliminar
                     </button>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -613,7 +715,7 @@ export default function AdminPanel({
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">
-                        Nombre de la moneda
+                        Nombre de la moneda o denominación
                       </label>
                       <input
                         type="text"
@@ -621,8 +723,47 @@ export default function AdminPanel({
                         onChange={(e) =>
                           handleGameChange("currencyName", e.target.value)
                         }
+                        placeholder="Ej: Diamantes, UC, USD, Puntos"
                         className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-on-surface focus:border-primary focus:outline-none"
                       />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">
+                        Tipo de Producto
+                      </label>
+                      <select
+                        value={selectedGame.isGiftCard || selectedGame.category === 'giftcard' ? 'giftcard' : 'game'}
+                        onChange={(e) => {
+                          const isGift = e.target.value === 'giftcard';
+                          handleGameChange('isGiftCard', isGift);
+                          if (isGift) {
+                            handleGameChange('category', 'giftcard');
+                          } else if (selectedGame.category === 'giftcard') {
+                            handleGameChange('category', 'mobile');
+                          }
+                        }}
+                        className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-on-surface focus:border-primary focus:outline-none"
+                      >
+                        <option value="game">🎮 Juego (Recarga Directa por ID)</option>
+                        <option value="giftcard">🎁 Tarjeta de Regalo (Gift Card)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">
+                        Categoría / Plataforma
+                      </label>
+                      <select
+                        value={selectedGame.category}
+                        onChange={(e) =>
+                          handleGameChange("category", e.target.value)
+                        }
+                        className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-on-surface focus:border-primary focus:outline-none"
+                      >
+                        <option value="mobile">Móvil</option>
+                        <option value="pc">PC</option>
+                        <option value="console">Consola</option>
+                        <option value="giftcard">Gift Card</option>
+                      </select>
                     </div>
                   </div>
                 </div>
@@ -724,7 +865,7 @@ export default function AdminPanel({
                 <div className="space-y-4">
                   {(selectedGame.packages || []).map((pkg, index) => (
                     <div
-                      key={pkg.id}
+                      key={`${pkg.id || 'pkg'}-${index}`}
                       className="bg-surface-elevated p-4 rounded-xl border border-glass-border flex flex-col md:flex-row gap-4 items-center"
                     >
                       <div className="flex items-center gap-3 w-full md:w-auto font-bold text-on-surface-variant shrink-0">
@@ -909,9 +1050,9 @@ export default function AdminPanel({
           </div>
 
           <div className="space-y-4">
-            {localPromoCodes.map((code) => (
+            {localPromoCodes.map((code, index) => (
               <div
-                key={code.id}
+                key={`${code.id || 'code'}-${index}`}
                 className="bg-surface-elevated p-4 rounded-xl border border-glass-border flex flex-col md:flex-row gap-4 items-center"
               >
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 w-full">
@@ -1233,6 +1374,25 @@ export default function AdminPanel({
 
           
           <div className="bg-surface-elevated p-6 rounded-xl border border-glass-border mb-6">
+            <h3 className="font-bold text-on-surface mb-4">Canales de Contacto y Soporte</h3>
+            <div>
+              <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">
+                Número de Teléfono / WhatsApp de Soporte
+              </label>
+              <input
+                type="text"
+                value={localSettings.supportPhone || "+584142943532"}
+                onChange={(e) => handleSettingsChange("supportPhone", e.target.value)}
+                className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-on-surface focus:border-primary focus:outline-none"
+                placeholder="Ej: +584142943532"
+              />
+              <p className="text-xs text-on-surface-variant mt-1.5 font-medium">
+                Este número se utilizará en los botones directos de WhatsApp para atención y soporte 24/7.
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-surface-elevated p-6 rounded-xl border border-glass-border mb-6">
             <h3 className="font-bold text-on-surface mb-4">Tasa de Cambio (VES/USD)</h3>
             <div className="flex flex-col md:flex-row gap-4 items-start md:items-end">
               <div className="flex-1 w-full">
@@ -1285,10 +1445,243 @@ export default function AdminPanel({
             </div>
           </div>
 
+          {/* BINANCE API INTEGRATION & VALIDATION CARD */}
+          <div className="bg-surface-elevated p-6 rounded-2xl border-2 border-amber-500/30 shadow-[0_4px_25px_rgba(240,185,11,0.1)] mb-8 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-glass-border pb-4 relative z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#F0B90B]/20 text-[#F0B90B] flex items-center justify-center border border-[#F0B90B]/40 shadow-[0_0_15px_rgba(240,185,11,0.25)]">
+                  <Bitcoin size={22} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-display text-lg font-bold text-on-surface">
+                      Autorización y Validación con <span className="text-[#F0B90B]">Binance API</span>
+                    </h3>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-[#F0B90B] border border-amber-500/30">
+                      API v3 & Pay
+                    </span>
+                  </div>
+                  <p className="text-xs text-on-surface-variant mt-0.5">
+                    Verifica automáticamente los pagos de USDT y Binance Pay mediante tu Clave API y Clave Secreta.
+                  </p>
+                </div>
+              </div>
+
+              {/* Enable toggle */}
+              <label className="flex items-center gap-3 cursor-pointer bg-surface px-4 py-2 rounded-xl border border-glass-border hover:border-amber-500/50 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={localSettings.binanceEnabled || false}
+                  onChange={(e) => handleSettingsChange("binanceEnabled", e.target.checked)}
+                  className="w-5 h-5 text-amber-500 bg-surface-container border-glass-border rounded focus:ring-amber-400"
+                />
+                <span className="text-sm font-bold text-on-surface">
+                  {localSettings.binanceEnabled ? "Validación Activa" : "Desactivado"}
+                </span>
+              </label>
+            </div>
+
+            <div className="space-y-4 relative z-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* API Key Input */}
+                <div>
+                  <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1.5 flex items-center gap-1.5">
+                    <Key size={14} className="text-[#F0B90B]" />
+                    Clave API de Binance (API Key)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showBinanceApiKey ? "text" : "password"}
+                      value={localSettings.binanceApiKey || ""}
+                      onChange={(e) => handleSettingsChange("binanceApiKey", e.target.value)}
+                      placeholder="Pega aquí tu API Key de Binance..."
+                      className="w-full bg-surface border border-glass-border rounded-xl py-2.5 pl-3 pr-10 text-on-surface text-sm font-mono focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowBinanceApiKey(!showBinanceApiKey)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface"
+                      title={showBinanceApiKey ? "Ocultar" : "Mostrar"}
+                    >
+                      {showBinanceApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Secret Key Input */}
+                <div>
+                  <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1.5 flex items-center gap-1.5">
+                    <ShieldCheck size={14} className="text-[#F0B90B]" />
+                    Clave Secreta de Binance (Secret Key)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showBinanceSecret ? "text" : "password"}
+                      value={localSettings.binanceApiSecret || ""}
+                      onChange={(e) => handleSettingsChange("binanceApiSecret", e.target.value)}
+                      placeholder="Pega aquí tu Secret Key de Binance..."
+                      className="w-full bg-surface border border-glass-border rounded-xl py-2.5 pl-3 pr-10 text-on-surface text-sm font-mono focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowBinanceSecret(!showBinanceSecret)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface"
+                      title={showBinanceSecret ? "Ocultar" : "Mostrar"}
+                    >
+                      {showBinanceSecret ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Binance Pay ID / Merchant ID */}
+                <div>
+                  <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1.5">
+                    Binance Pay ID / Email de Cuenta (Opcional)
+                  </label>
+                  <input
+                    type="text"
+                    value={localSettings.binancePayId || ""}
+                    onChange={(e) => handleSettingsChange("binancePayId", e.target.value)}
+                    placeholder="Ej: 82938172 o tu email de Binance"
+                    className="w-full bg-surface border border-glass-border rounded-xl py-2.5 px-3 text-on-surface text-sm focus:border-amber-400 focus:outline-none"
+                  />
+                  <p className="text-[11px] text-on-surface-variant mt-1">
+                    Se mostrará a los clientes para facilitar sus pagos directos a tu cuenta.
+                  </p>
+                </div>
+
+                {/* Custom Payment Link */}
+                <div>
+                  <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1.5">
+                    Link de Cobro Binance Pay (Opcional)
+                  </label>
+                  <input
+                    type="text"
+                    value={localSettings.binanceCustomPayUrl || ""}
+                    onChange={(e) => handleSettingsChange("binanceCustomPayUrl", e.target.value)}
+                    placeholder="https://pay.binance.com/..."
+                    className="w-full bg-surface border border-glass-border rounded-xl py-2.5 px-3 text-on-surface text-sm focus:border-amber-400 focus:outline-none font-mono"
+                  />
+                  <p className="text-[11px] text-on-surface-variant mt-1">
+                    Enlace directo de cobro creado en Binance si deseas abrirlo directamente.
+                  </p>
+                </div>
+
+                {/* Validation Mode */}
+                <div>
+                  <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1.5">
+                    Modo de Validación Automática
+                  </label>
+                  <select
+                    value={localSettings.binanceValidationMode || "auto"}
+                    onChange={(e) => handleSettingsChange("binanceValidationMode", e.target.value)}
+                    className="w-full bg-surface border border-glass-border rounded-xl py-2.5 px-3 text-on-surface text-sm focus:border-amber-400 focus:outline-none"
+                  >
+                    <option value="auto">Validación Inteligente Combinada (Pay & Depósitos)</option>
+                    <option value="api_transactions">Historial de Transacciones Pay / C2C</option>
+                    <option value="merchant_pay">Binance Pay Merchant Oficial (v2/v3)</option>
+                  </select>
+                  <p className="text-[11px] text-on-surface-variant mt-1">
+                    Revisa las transacciones registradas en tu Binance para validar al instante.
+                  </p>
+                </div>
+              </div>
+
+              {/* Action: Test Connection Button */}
+              <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <button
+                  type="button"
+                  onClick={handleTestBinanceConnection}
+                  disabled={isTestingBinance || !localSettings.binanceApiKey || !localSettings.binanceApiSecret}
+                  className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black px-5 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(240,185,11,0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  {isTestingBinance ? (
+                    <>
+                      <RefreshCw size={16} className="animate-spin" />
+                      Probando Conexión con Binance...
+                    </>
+                  ) : (
+                    <>
+                      <Zap size={16} />
+                      Probar Conexión con Binance API
+                    </>
+                  )}
+                </button>
+
+                <span className="text-xs text-on-surface-variant">
+                  {localSettings.binanceApiKey && localSettings.binanceApiSecret
+                    ? "✓ Credenciales listas para verificación"
+                    : "⚠️ Ingresa tu API Key y Secret Key para probar"}
+                </span>
+              </div>
+
+              {/* Test Result Banner */}
+              {binanceTestResult && (
+                <div
+                  className={`p-4 rounded-xl border text-xs sm:text-sm animate-in fade-in duration-300 ${
+                    binanceTestResult.success
+                      ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                      : "bg-red-500/10 border-red-500/30 text-red-300"
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    {binanceTestResult.success ? (
+                      <CheckCircle2 size={20} className="text-emerald-400 shrink-0 mt-0.5" />
+                    ) : (
+                      <AlertCircle size={20} className="text-red-400 shrink-0 mt-0.5" />
+                    )}
+                    <div className="space-y-1 w-full">
+                      <p className="font-bold text-sm">{binanceTestResult.message}</p>
+                      {binanceTestResult.success && (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2 pt-2 border-t border-emerald-500/20 text-xs font-mono">
+                          <div>
+                            <span className="text-slate-400 block">Latencia:</span>
+                            <span className="font-bold text-emerald-400">{binanceTestResult.latencyMs} ms</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block">Tipo de Cuenta:</span>
+                            <span className="font-bold text-emerald-400">{binanceTestResult.accountType || "SPOT"}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block">Saldo USDT Disponible:</span>
+                            <span className="font-bold text-emerald-400">${binanceTestResult.usdtBalance} USDT</span>
+                          </div>
+                        </div>
+                      )}
+                      {binanceTestResult.error && (
+                        <p className="text-xs text-red-300 mt-1">
+                          Detalle: {binanceTestResult.error}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Informative Guidance Accordion */}
+              <div className="p-3.5 rounded-xl bg-surface border border-glass-border text-xs text-on-surface-variant space-y-1.5">
+                <p className="font-bold text-amber-400 flex items-center gap-1.5">
+                  <Key size={13} />
+                  ¿Cómo generar tus credenciales en Binance?
+                </p>
+                <ol className="list-decimal pl-4 space-y-1 text-slate-300 text-[11px] leading-relaxed">
+                  <li>Inicia sesión en tu cuenta de <strong className="text-white">Binance</strong> y ve a <strong className="text-white">Perfil → Gestión de API</strong>.</li>
+                  <li>Haz clic en <strong className="text-white">Crear API</strong> (Generada por el sistema) y asigna un nombre (ej: "NexPlay").</li>
+                  <li>Copia la <strong className="text-amber-300">API Key</strong> y la <strong className="text-amber-300">Secret Key</strong> (solo se muestra una vez).</li>
+                  <li>En las restricciones de la API, asegúrate de tener marcado <strong className="text-white">"Habilitar lectura"</strong> (no requiere permisos de retiro).</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-6">
             {(localSettings.paymentMethods || []).map((method, index) => (
               <div
-                key={method.id}
+                key={`${method.id || 'pm'}-${index}`}
                 className="bg-surface-elevated p-6 rounded-xl border border-glass-border relative group"
               >
                 <button
@@ -1358,9 +1751,9 @@ export default function AdminPanel({
                     </select>
                   </div>
                 </div>
-                <div>
+                <div className="mb-4">
                   <label className="block text-xs font-bold text-on-surface-variant uppercase mb-1">
-                    Instrucciones / Datos
+                    Instrucciones / Datos de Pago
                   </label>
                   <textarea
                     value={method.instructions || ""}
@@ -1370,8 +1763,112 @@ export default function AdminPanel({
                       handleSettingsChange("paymentMethods", newMethods);
                     }}
                     placeholder="Ej: Banco: Bancaribe\nCédula: 1234567\nTeléfono: 0412-1234567"
-                    className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-on-surface focus:border-primary focus:outline-none min-h-[100px] resize-y font-mono text-sm"
+                    className="w-full bg-surface border border-glass-border rounded-lg py-2 px-3 text-on-surface focus:border-primary focus:outline-none min-h-[90px] resize-y font-mono text-sm"
                   />
+                </div>
+
+                {/* QR CODE CONFIGURATION FOR PAYMENT METHOD */}
+                <div className="p-4 rounded-xl bg-surface/70 border border-glass-border space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-on-surface flex items-center gap-1.5 uppercase">
+                      <QrCode size={15} className="text-cyan-400" />
+                      Código QR para este Método (Opcional)
+                    </label>
+                    {method.qrCodeUrl && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newMethods = [...(localSettings.paymentMethods || [])];
+                          newMethods[index].qrCodeUrl = "";
+                          newMethods[index].qrTitle = "";
+                          handleSettingsChange("paymentMethods", newMethods);
+                        }}
+                        className="text-[11px] text-red-400 hover:text-red-300 font-bold"
+                      >
+                        Quitar QR
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+                    <div className="md:col-span-2 space-y-3">
+                      <div>
+                        <label className="block text-[11px] font-medium text-on-surface-variant mb-1">
+                          URL de la imagen del Código QR
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={method.qrCodeUrl || ""}
+                            onChange={(e) => {
+                              const newMethods = [...(localSettings.paymentMethods || [])];
+                              newMethods[index].qrCodeUrl = e.target.value;
+                              handleSettingsChange("paymentMethods", newMethods);
+                            }}
+                            placeholder="https://... o sube una imagen directa"
+                            className="w-full bg-surface border border-glass-border rounded-lg py-1.5 px-3 text-on-surface text-xs focus:border-cyan-400 focus:outline-none font-mono"
+                          />
+                          <label className="shrink-0 bg-surface-container hover:bg-surface-elevated text-cyan-400 border border-cyan-500/30 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer flex items-center gap-1 transition-colors">
+                            <Upload size={13} />
+                            Subir QR
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onloadend = () => {
+                                    const newMethods = [...(localSettings.paymentMethods || [])];
+                                    newMethods[index].qrCodeUrl = reader.result as string;
+                                    handleSettingsChange("paymentMethods", newMethods);
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-medium text-on-surface-variant mb-1">
+                          Texto / Título sobre el QR (Opcional)
+                        </label>
+                        <input
+                          type="text"
+                          value={method.qrTitle || ""}
+                          onChange={(e) => {
+                            const newMethods = [...(localSettings.paymentMethods || [])];
+                            newMethods[index].qrTitle = e.target.value;
+                            handleSettingsChange("paymentMethods", newMethods);
+                          }}
+                          placeholder={`Ej: Escanea para pagar con ${method.name}`}
+                          className="w-full bg-surface border border-glass-border rounded-lg py-1.5 px-3 text-on-surface text-xs focus:border-cyan-400 focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* QR Preview */}
+                    <div className="flex flex-col items-center justify-center p-2 rounded-lg bg-surface border border-glass-border min-h-[100px]">
+                      {method.qrCodeUrl ? (
+                        <div className="w-24 h-24 bg-white p-1 rounded-md shadow flex items-center justify-center overflow-hidden">
+                          <img
+                            src={method.qrCodeUrl}
+                            alt="Vista previa QR"
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                      ) : (
+                        <div className="text-center p-2">
+                          <QrCode size={28} className="mx-auto text-slate-600 mb-1" />
+                          <span className="text-[10px] text-on-surface-variant block">Sin código QR</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
@@ -1451,9 +1948,9 @@ export default function AdminPanel({
                     </td>
                   </tr>
                 ) : (
-                  (orders || []).map((order) => (
+                  (orders || []).map((order, index) => (
                     <tr
-                      key={order.id}
+                      key={`${order.id || 'order'}-${index}`}
                       className="border-b border-glass-border/50 hover:bg-surface-elevated/50 transition-colors"
                     >
                       <td className="py-3 px-4 text-sm font-mono whitespace-nowrap">
@@ -1667,7 +2164,16 @@ export default function AdminPanel({
                   </span>
                 </div>
               </div>
-              {selectedOrderDetails.receiptUrl && (
+              
+              {selectedOrderDetails.assaxResult && (
+                <div className="mt-4 border-t border-glass-border pt-4">
+                  <p className="text-on-surface-variant font-bold mb-2">Resultado Assax Store</p>
+                  <pre className="w-full bg-black/40 rounded-lg p-3 border border-glass-border text-xs text-on-surface whitespace-pre-wrap font-mono overflow-auto max-h-32">
+                    {JSON.stringify(selectedOrderDetails.assaxResult, null, 2)}
+                  </pre>
+                </div>
+              )}
+{selectedOrderDetails.receiptUrl && (
                 <div className="mt-4 border-t border-glass-border pt-4">
                   <p className="text-on-surface-variant font-bold mb-2">Comprobante Adjunto</p>
                   <div className="w-full bg-black/40 rounded-lg p-2 border border-glass-border flex justify-center">

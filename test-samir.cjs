@@ -1,0 +1,11 @@
+const { FreeFireAPI } = require('@samir.oe70/freefire-api');
+async function run() {
+  try {
+    const api = new FreeFireAPI();
+    const profile = await api.getPlayerProfile('1096053896');
+    console.log("Success:", profile.basicinfo.nickname);
+  } catch (err) {
+    console.error("Error:", err);
+  }
+}
+run();

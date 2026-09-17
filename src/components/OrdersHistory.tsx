@@ -46,10 +46,10 @@ export default function OrdersHistory({ orders }: Props) {
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          {(orders || []).map((order) => {
+          {(orders || []).map((order, index) => {
             const statusConfig = getStatusConfig(order.status);
             return (
-              <div key={order.id} className="glass-panel p-4 rounded-xl border border-glass-border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all hover:bg-surface-container">
+              <div key={`${order.id || 'order'}-${index}`} className="glass-panel p-4 rounded-xl border border-glass-border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all hover:bg-surface-container">
                 <div className="flex items-center gap-4 w-full md:w-auto">
                   <div className="w-12 h-12 bg-surface-dim rounded-lg flex items-center justify-center text-primary shrink-0 border border-glass-border">
                     <Package size={24} />

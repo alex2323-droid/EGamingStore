@@ -13,18 +13,18 @@ interface Props {
   orders?: Order[];
 }
 
-const DEFAULT_WRAPPER = `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #09090b; color: #f8fafc; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #27272a;">
-  <div style="background-color: #18181b; padding: 24px; text-align: center; border-bottom: 1px solid #27272a;">
-    <h1 style="margin: 0; color: #f97316; font-size: 24px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">E Gaming Store</h1>
+const DEFAULT_WRAPPER = `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #050f26; color: #f8fafc; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid rgba(0, 210, 255, 0.22);">
+  <div style="background-color: #030a1b; padding: 24px; text-align: center; border-bottom: 1px solid rgba(0, 210, 255, 0.22);">
+    <h1 style="margin: 0; color: #00d2ff; font-size: 24px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">NexPlay</h1>
   </div>
   <div style="padding: 32px 24px;">
     {{CONTENT}}
     <div style="text-align: center; margin-top: 32px;">
-      <a href="https://egamingstore.onrender.com" style="display: inline-block; background-color: #f97316; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">Visita la Tienda</a>
+      <a href="https://nexplay.online" style="display: inline-block; background-color: #00d2ff; color: #020617; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">Visita NexPlay</a>
     </div>
   </div>
-  <div style="background-color: #18181b; padding: 16px; text-align: center; border-top: 1px solid #27272a;">
-    <p style="margin: 0; color: #52525b; font-size: 12px;">© ${new Date().getFullYear()} E Gaming Store. Todos los derechos reservados.</p>
+  <div style="background-color: #030a1b; padding: 16px; text-align: center; border-top: 1px solid rgba(0, 210, 255, 0.22);">
+    <p style="margin: 0; color: #52525b; font-size: 12px;">© ${new Date().getFullYear()} NexPlay. Todos los derechos reservados.</p>
   </div>
 </div>`;
 
@@ -47,7 +47,7 @@ export default function EmailComposer({ orders = [] }: Props) {
     const defaultTemplate: EmailTemplate = {
       id: 'default-1',
       name: 'Plantilla por Defecto',
-      subject: 'Comunicado Importante - E Gaming Store',
+      subject: 'Comunicado Importante - NexPlay',
       wrapperHtml: DEFAULT_WRAPPER
     };
 
@@ -183,8 +183,8 @@ export default function EmailComposer({ orders = [] }: Props) {
               className="bg-surface border border-glass-border rounded-lg py-2 px-3 text-sm text-on-surface focus:border-primary focus:outline-none"
             >
               <option value="">Plantilla base...</option>
-              {templates.map(t => (
-                <option key={t.id} value={t.id}>{t.name}</option>
+              {templates.map((t, index) => (
+                <option key={`${t.id || 'tmpl'}-${index}`} value={t.id}>{t.name}</option>
               ))}
             </select>
             {selectedTemplateId && selectedTemplateId !== 'default-1' && (
