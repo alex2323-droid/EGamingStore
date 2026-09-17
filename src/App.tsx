@@ -181,7 +181,7 @@ export default function App() {
         } else {
           setIsAuthenticated(true);
           const userEmail = user.email || "";
-          const isUserAdmin = userEmail.toLowerCase() === "egamingstore1@gmail.com" ||
+          const isUserAdmin = userEmail.toLowerCase() === "nexplay2307@gmail.com" ||
               userEmail.toLowerCase() === "alexparababi23@gmail.com" ||
               userEmail.toLowerCase() === "avila2004alexparababi@gmail.com";
           setIsAdmin(isUserAdmin);

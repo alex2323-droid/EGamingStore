@@ -93,7 +93,7 @@ export default function Support({ siteSettings }: Props) {
                 Soporte por Correo
               </h4>
               <p className="text-sm font-medium text-on-surface-variant mt-1">
-                egamingstore1@gmail.com
+                nexplay2307@gmail.com
               </p>
             </div>
           </div>
