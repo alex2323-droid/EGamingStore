@@ -386,7 +386,7 @@ export default function App() {
         let apiUrl = import.meta.env.VITE_API_URL || '';
         if (apiUrl.includes('<AQUI')) apiUrl = '';
         apiUrl = apiUrl.replace(/\/+$/, '');
-        fetch(`${apiUrl}/api/notify-order-status`, {
+        fetch(`/api/notify-order-status`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

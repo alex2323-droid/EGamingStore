@@ -14,7 +14,7 @@ dns.setDefaultResultOrder('ipv4first');
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-const EMAIL_USER = (process.env.GMAIL_USER || 'EgamingStore1@gmail.com').trim();
+const EMAIL_USER = (process.env.GMAIL_USER || 'nexplay2307@gmail.com').trim();
 const EMAIL_PASS = (process.env.GMAIL_APP_PASSWORD || 'hlbhebihoihlewcf').replace(/\s+/g, '');
 
 const transporter = nodemailer.createTransport({
@@ -162,7 +162,7 @@ async function startServer() {
     try {
       // Security check in a real app would be done via tokens, we assume the frontend sends the user's email if needed or we trust the container for now
       const { games, adminEmail } = req.body;
-      const admins = ['EgamingStore1@gmail.com', 'alexparababi23@gmail.com', 'avila2004alexparababi@gmail.com'];
+      const admins = ['nexplay2307@gmail.com', 'alexparababi23@gmail.com', 'avila2004alexparababi@gmail.com'];
       if (!admins.includes(adminEmail)) {
         return res.status(403).json({ error: 'Unauthorized' });
       }
@@ -178,7 +178,7 @@ async function startServer() {
     try {
       const { order, customerEmail } = req.body;
       
-      const admins = ['EgamingStore1@gmail.com', 'alexparababi23@gmail.com', 'avila2004alexparababi@gmail.com'];
+      const admins = ['nexplay2307@gmail.com', 'alexparababi23@gmail.com', 'avila2004alexparababi@gmail.com'];
       const safeCustomerEmail = customerEmail && typeof customerEmail === 'string' ? customerEmail.trim() : 'N/A';
 
       

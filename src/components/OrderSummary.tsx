@@ -78,7 +78,7 @@ export default function OrderSummary({ game, selectedPackage, selectedPayment, i
       if (apiUrl.includes('<AQUI')) apiUrl = '';
       apiUrl = apiUrl.replace(/\/+$/, '');
 
-      const res = await fetch(`${apiUrl}/api/binance/create-order`, {
+      const res = await fetch(`/api/binance/create-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -129,7 +129,7 @@ export default function OrderSummary({ game, selectedPackage, selectedPayment, i
 
       const finalPrice = calculateFinalPrice();
 
-      const res = await fetch(`${apiUrl}/api/binance/verify-payment`, {
+      const res = await fetch(`/api/binance/verify-payment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -256,7 +256,7 @@ export default function OrderSummary({ game, selectedPackage, selectedPayment, i
         if (apiUrl.includes('<AQUI')) apiUrl = '';
         apiUrl = apiUrl.replace(/\/+$/, '');
 
-        const verifyRes = await fetch(`${apiUrl}/api/binance/verify-payment`, {
+        const verifyRes = await fetch(`/api/binance/verify-payment`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -313,7 +313,7 @@ export default function OrderSummary({ game, selectedPackage, selectedPayment, i
       if (apiUrl.includes('<AQUI')) apiUrl = '';
       apiUrl = apiUrl.replace(/\/+$/, '');
       // Ejecutamos la llamada al servidor de correo en segundo plano para no bloquear el UI
-      fetch(`${apiUrl}/api/notify-order`, {
+      fetch(`/api/notify-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ order: newOrder, customerEmail: currentUserEmail }),

@@ -136,7 +136,7 @@ export default function EmailComposer({ orders = [] }: Props) {
       if (apiUrl.includes('<AQUI')) apiUrl = '';
       apiUrl = apiUrl.replace(/\/+$/, '');
 
-      const response = await fetch(`${apiUrl}/api/admin-email`, {
+      const response = await fetch(`/api/admin-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ to: finalRecipients, subject, html: finalHtml })
